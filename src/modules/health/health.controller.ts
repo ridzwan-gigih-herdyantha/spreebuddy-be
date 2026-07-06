@@ -10,9 +10,12 @@ export async function healthCheck(_req: Request, res: Response) {
     dbStatus = 'down';
   }
 
-  res.status(200).json({
-    success: true,
-    status: 'ok',
+  const healthy = dbStatus === 'up';
+
+  // 503 when a critical one (DB) is down
+  res.status(healthy ? 200 : 503).json({
+    success: healthy,
+    status: healthy ? 'ok' : 'unavailable',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     services: {

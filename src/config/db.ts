@@ -7,12 +7,24 @@ let db: Db | null = null;
 export async function connectDB(): Promise<Db> {
   if (db) return db;
 
-  client = new MongoClient(env.mongoUri);
-  await client.connect();
-  db = client.db(env.dbName);
+  const candidate = new MongoClient(env.mongoUri, {
+    // Fail fast when no MongoDB server is reachable instead of the 30s default.
+    serverSelectionTimeoutMS: 3000,
+    connectTimeoutMS: 3000,
+  });
 
-  // Verify the connection is alive.
-  await db.command({ ping: 1 });
+  try {
+    await candidate.connect();
+    // Verify the connection is actually alive.
+    await candidate.db(env.dbName).command({ ping: 1 });
+  } catch (err) {
+    // Clean up the failed client so retries don't leak sockets.
+    await candidate.close().catch(() => {});
+    throw err;
+  }
+
+  client = candidate;
+  db = candidate.db(env.dbName);
   console.log(`[db] Connected to MongoDB → database "${env.dbName}"`);
 
   return db;
@@ -20,9 +32,13 @@ export async function connectDB(): Promise<Db> {
 
 export function getDB(): Db {
   if (!db) {
-    throw new Error('Database not initialized. Call connectDB() first.');
+    throw new Error('Database not connected');
   }
   return db;
+}
+
+export function isDBConnected(): boolean {
+  return db !== null;
 }
 
 export async function disconnectDB(): Promise<void> {
