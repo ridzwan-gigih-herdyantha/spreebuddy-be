@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { login } from './auth.service.js';
 import { ApiError } from '../../common/errors/ApiError.js';
+import { sendSuccess } from '../../common/http/response.js';
 import { isProduction } from '../../config/env.js';
 import { User } from '../users/user.model.js';
+import { UserResource } from '../users/user.resource.js';
 
 const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -15,27 +17,27 @@ export async function loginHandler(req: Request, res: Response) {
     throw ApiError.badRequest('identifier (email or username) and password are required');
   }
 
-  const result = await login({ identifier: String(id), password: String(password) });
+  const { token, user } = await login({ identifier: String(id), password: String(password) });
 
   // Also set an httpOnly cookie so browser clients don't have to store the token manually.
-  res.cookie('token', result.token, {
+  res.cookie('token', token, {
     httpOnly: true,
     secure: isProduction,
     sameSite: 'lax',
     maxAge: TOKEN_COOKIE_MAX_AGE,
   });
 
-  res.json({ success: true, ...result });
+  return sendSuccess(res, { token, user: UserResource.item(user) }, 'Login successful');
 }
 
 export function logoutHandler(_req: Request, res: Response) {
   res.clearCookie('token');
-  res.json({ success: true, message: 'Logged out' });
+  return sendSuccess(res, null, 'Logged out');
 }
 
 // Returns the currently authenticated user (requires the `authenticate` middleware).
 export async function meHandler(req: Request, res: Response) {
   const user = await User.findById(req.user!.id);
   if (!user) throw ApiError.notFound('User not found');
-  res.json({ success: true, user });
+  return sendSuccess(res, UserResource.item(user), 'Current user');
 }

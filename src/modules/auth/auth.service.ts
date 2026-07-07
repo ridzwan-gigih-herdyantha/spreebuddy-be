@@ -22,14 +22,6 @@ export async function login({ identifier, password }: LoginInput) {
     role: user.role,
   });
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    },
-  };
+  // Return the document; the controller shapes it via UserResource.
+  return { token, user };
 }
