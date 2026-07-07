@@ -15,6 +15,8 @@ export const env = {
   port: Number(process.env.PORT ?? 3000),
   mongoUri: required('MONGO_URI', 'mongodb://127.0.0.1:27017'),
   dbName: required('DB_NAME', 'spreebuddy'),
+  jwtSecret: required('JWT_SECRET', 'dev-insecure-secret-change-me'),
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';
