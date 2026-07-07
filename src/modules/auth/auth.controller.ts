@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { login, register } from './auth.service.js';
+import { RegisterBody } from './auth.schema.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { isProduction } from '../../config/env.js';
@@ -11,23 +12,12 @@ const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Express 5 forwards rejected promises to the error middleware automatically.
 export async function registerHandler(req: Request, res: Response) {
-  const { name, username, email, password } = req.body ?? {};
+  const { name, username, email, password } = req.body as RegisterBody;
   // `avatar` arrives as an uploaded file (optional).
   const avatar = req.file ? fileService.publicPath('avatars', req.file.filename) : undefined;
 
   try {
-    if (!name || !username || !email || !password) {
-      throw ApiError.badRequest('name, username, email, and password are required');
-    }
-
-    const user = await register({
-      name: String(name),
-      username: String(username),
-      email: String(email),
-      password: String(password),
-      avatar,
-    });
-
+    const user = await register({ name, username, email, password, avatar });
     return sendCreated(res, UserResource.item(user), 'Registration successful');
   } catch (err) {
     // Clean up orphaned upload if registration fails.

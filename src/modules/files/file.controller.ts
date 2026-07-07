@@ -6,7 +6,8 @@ import { fileService } from '../../common/services/file.service.js';
 
 // GET /files/:category/:filename — stream a stored upload.
 export function serveFile(req: Request, res: Response) {
-  const { category, filename } = req.params;
+  const category = String(req.params.category);
+  const filename = String(req.params.filename);
 
   // Block path traversal (no slashes / '..').
   if (category !== path.basename(category) || filename !== path.basename(filename)) {
