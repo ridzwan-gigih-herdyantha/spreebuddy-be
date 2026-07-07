@@ -1,51 +1,34 @@
-import { MongoClient, Db } from 'mongodb';
+import mongoose from 'mongoose';
 import { env } from './env.js';
 
-let client: MongoClient | null = null;
-let db: Db | null = null;
+// Fail fast (and let queries reject fast) instead of the 30s / 10s defaults.
+mongoose.set('bufferTimeoutMS', 5000);
 
-export async function connectDB(): Promise<Db> {
-  if (db) return db;
-
-  const candidate = new MongoClient(env.mongoUri, {
-    // Fail fast when no MongoDB server is reachable instead of the 30s default.
+export async function connectDB(): Promise<void> {
+  await mongoose.connect(env.mongoUri, {
+    dbName: env.dbName,
     serverSelectionTimeoutMS: 3000,
     connectTimeoutMS: 3000,
   });
-
-  try {
-    await candidate.connect();
-    // Verify the connection is actually alive.
-    await candidate.db(env.dbName).command({ ping: 1 });
-  } catch (err) {
-    // Clean up the failed client so retries don't leak sockets.
-    await candidate.close().catch(() => {});
-    throw err;
-  }
-
-  client = candidate;
-  db = candidate.db(env.dbName);
   console.log(`[db] Connected to MongoDB → database "${env.dbName}"`);
-
-  return db;
-}
-
-export function getDB(): Db {
-  if (!db) {
-    throw new Error('Database not connected');
-  }
-  return db;
 }
 
 export function isDBConnected(): boolean {
-  return db !== null;
+  return mongoose.connection.readyState === 1;
+}
+
+/** Lightweight liveness check used by the health endpoint. */
+export async function pingDB(): Promise<boolean> {
+  try {
+    if (mongoose.connection.readyState !== 1) return false;
+    await mongoose.connection.db!.admin().ping();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function disconnectDB(): Promise<void> {
-  if (client) {
-    await client.close();
-    client = null;
-    db = null;
-    console.log('[db] MongoDB connection closed');
-  }
+  await mongoose.disconnect();
+  console.log('[db] MongoDB connection closed');
 }

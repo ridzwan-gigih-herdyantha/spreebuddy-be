@@ -1,18 +1,14 @@
 import { Request, Response } from 'express';
-import { getDB } from '../../config/db.js';
+import { pingDB } from '../../config/db.js';
 
 export async function healthCheck(_req: Request, res: Response) {
-  let dbStatus = 'down';
-  try {
-    await getDB().command({ ping: 1 });
-    dbStatus = 'up';
-  } catch {
-    dbStatus = 'down';
-  }
+  const dbUp = await pingDB();
+  const dbStatus = dbUp ? 'up' : 'down';
 
-  const healthy = dbStatus === 'up';
+  const healthy = dbUp;
 
-  // 503 when a critical one (DB) is down
+  // 200 when every dependency is up, 503 when a critical one (DB) is down —
+  // so load balancers / k8s readiness probes react correctly.
   res.status(healthy ? 200 : 503).json({
     success: healthy,
     status: healthy ? 'ok' : 'unavailable',
