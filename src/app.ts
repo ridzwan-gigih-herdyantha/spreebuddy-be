@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
+import fileRoutes from './modules/files/file.routes.js';
 import { sendSuccess } from './common/http/response.js';
 import { notFoundHandler } from './common/middlewares/notFound.middleware.js';
 import { errorHandler } from './common/middlewares/error.middleware.js';
@@ -13,6 +14,9 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files at /files/:category/:filename
+app.use('/files', fileRoutes);
 
 // Root ping
 app.get('/', (_req: Request, res: Response) => {

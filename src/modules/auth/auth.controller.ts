@@ -5,26 +5,35 @@ import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { isProduction } from '../../config/env.js';
 import { User } from '../users/user.model.js';
 import { UserResource } from '../users/user.resource.js';
+import { fileService } from '../../common/services/file.service.js';
 
 const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Express 5 forwards rejected promises to the error middleware automatically.
 export async function registerHandler(req: Request, res: Response) {
-  const { name, username, email, password, avatar } = req.body ?? {};
+  const { name, username, email, password } = req.body ?? {};
+  // `avatar` arrives as an uploaded file (optional).
+  const avatar = req.file ? fileService.publicPath('avatars', req.file.filename) : undefined;
 
-  if (!name || !username || !email || !password) {
-    throw ApiError.badRequest('name, username, email, and password are required');
+  try {
+    if (!name || !username || !email || !password) {
+      throw ApiError.badRequest('name, username, email, and password are required');
+    }
+
+    const user = await register({
+      name: String(name),
+      username: String(username),
+      email: String(email),
+      password: String(password),
+      avatar,
+    });
+
+    return sendCreated(res, UserResource.item(user), 'Registration successful');
+  } catch (err) {
+    // Clean up orphaned upload if registration fails.
+    if (req.file) await fileService.remove(req.file.path);
+    throw err;
   }
-
-  const user = await register({
-    name: String(name),
-    username: String(username),
-    email: String(email),
-    password: String(password),
-    avatar: avatar ? String(avatar) : undefined, // optional
-  });
-
-  return sendCreated(res, UserResource.item(user), 'Registration successful');
 }
 
 export async function loginHandler(req: Request, res: Response) {

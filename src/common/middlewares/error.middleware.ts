@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
+import { MulterError } from 'multer';
 import { ApiError, ErrorDetail } from '../errors/ApiError.js';
 import { ErrorBody } from '../http/response.js';
 import { isProduction } from '../../config/env.js';
@@ -7,6 +8,13 @@ import { isProduction } from '../../config/env.js';
 // Normalize any thrown value into an ApiError so the response is always uniform.
 function toApiError(err: unknown): ApiError {
   if (err instanceof ApiError) return err;
+
+  // File upload errors (multer), e.g. file too large or unexpected field.
+  if (err instanceof MulterError) {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE' ? 'Avatar file too large (max 2MB)' : err.message;
+    return ApiError.badRequest(message);
+  }
 
   // Mongoose schema validation → 422 with per-field details.
   if (err instanceof mongoose.Error.ValidationError) {
