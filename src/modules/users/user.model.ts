@@ -30,8 +30,15 @@ export interface IUserMethods {
   comparePassword(candidate: string): Promise<boolean>;
 }
 
+export interface UserQueryHelpers {
+  // Generic in the result type so it chains on both find() and countDocuments().
+  noAdmin<R = UserDocument[]>(
+    this: mongoose.QueryWithHelpers<R, UserDocument, UserQueryHelpers>,
+  ): mongoose.QueryWithHelpers<R, UserDocument, UserQueryHelpers>;
+}
+
 export type UserDocument = HydratedDocument<IUser, IUserMethods>;
-type UserModel = Model<IUser, {}, IUserMethods>;
+type UserModel = Model<IUser, UserQueryHelpers, IUserMethods>;
 
 const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
@@ -109,6 +116,11 @@ userSchema.pre('save', async function () {
 userSchema.method('comparePassword', function (candidate: string) {
   return bcrypt.compare(candidate, this.password);
 });
+
+// exclude admin users from queries
+userSchema.query.noAdmin = function (this: mongoose.QueryWithHelpers<any, UserDocument, UserQueryHelpers>) {
+  return this.where({ role: { $ne: ROLES.ADMIN } });
+};
 
 export const User = mongoose.model<IUser, UserModel>('User', userSchema);
 export default User;
