@@ -4,6 +4,7 @@ import {
   getProduct,
   createProductHandler,
   updateProductHandler,
+  deleteProductHandler,
 } from './product.controller.js';
 import { authenticate } from '../../common/middlewares/authenticate.middleware.js';
 import { requireRole } from '../../common/middlewares/authorize.middleware.js';
@@ -30,5 +31,7 @@ router.patch(
   validateBody(updateProductSchema),
   updateProductHandler,
 );
+router.delete('/:id', authenticate, requireRole(ROLES.ADMIN), deleteProductHandler);
 
 export default router;
+

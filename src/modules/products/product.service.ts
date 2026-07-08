@@ -41,3 +41,9 @@ export async function updateProduct(id: string, update: UpdateProductBody) {
     await product.save();
     return product;
 }
+
+export async function deleteProduct(id: string) {
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) throw ApiError.notFound('Product not found');
+    return product;
+}

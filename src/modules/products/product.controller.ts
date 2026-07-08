@@ -36,3 +36,9 @@ export async function updateProductHandler(req: Request, res: Response) {
     const product = await productService.updateProduct(id, req.body as UpdateProductBody);
     return sendSuccess(res, ProductResource.item(product), 'Product updated');
 }
+
+export async function deleteProductHandler(req: Request, res: Response) {
+    const id = String(req.params.id);
+    await productService.deleteProduct(id);
+    return sendSuccess(res, null, 'Product deleted');
+}
