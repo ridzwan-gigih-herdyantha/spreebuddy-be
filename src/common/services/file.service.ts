@@ -49,4 +49,11 @@ async function remove(diskFilePath: string) {
   await fs.promises.unlink(diskFilePath).catch(() => {});
 }
 
-export const fileService = { single, publicPath, diskPath, remove };
+// Delete a file given its public URL (/files/<category>/<filename>).
+async function removeByPublicPath(publicUrl: string) {
+  const parts = publicUrl.split('/').filter(Boolean); // ['files', category, filename]
+  if (parts[0] !== 'files' || parts.length < 3) return;
+  await remove(diskPath(parts[1], parts[2]));
+}
+
+export const fileService = { single, publicPath, diskPath, remove, removeByPublicPath };

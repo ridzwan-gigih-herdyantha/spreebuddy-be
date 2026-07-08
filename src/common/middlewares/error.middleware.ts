@@ -27,7 +27,8 @@ function toApiError(err: unknown): ApiError {
 
   // Invalid ObjectId / cast failure → 400.
   if (err instanceof mongoose.Error.CastError) {
-    return ApiError.badRequest(`Invalid value for "${err.path}"`);
+    const field = err.path === '_id' ? 'id' : err.path;
+    return ApiError.badRequest(`The ${field} provided is not valid`);
   }
 
   // Duplicate unique key → 409.

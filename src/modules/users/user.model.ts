@@ -31,16 +31,16 @@ export interface IUserMethods {
 }
 
 export interface UserQueryHelpers {
-  // Generic in the result type so it chains on both find() and countDocuments().
-  noAdmin<R = UserDocument[]>(
-    this: mongoose.QueryWithHelpers<R, UserDocument, UserQueryHelpers>,
-  ): mongoose.QueryWithHelpers<R, UserDocument, UserQueryHelpers>;
+  noAdmin(): mongoose.QueryWithHelpers<UserDocument[], UserDocument, UserQueryHelpers>;
 }
+
+// Single source of the "not an admin" condition — used by the helper and by counts.
+export const NON_ADMIN_FILTER = { role: { $ne: ROLES.ADMIN } } as const;
 
 export type UserDocument = HydratedDocument<IUser, IUserMethods>;
 type UserModel = Model<IUser, UserQueryHelpers, IUserMethods>;
 
-const userSchema = new Schema<IUser, UserModel, IUserMethods>(
+const userSchema = new Schema<IUser, UserModel, IUserMethods, UserQueryHelpers>(
   {
     name: { 
         type: String, 
@@ -118,8 +118,10 @@ userSchema.method('comparePassword', function (candidate: string) {
 });
 
 // exclude admin users from queries
-userSchema.query.noAdmin = function (this: mongoose.QueryWithHelpers<any, UserDocument, UserQueryHelpers>) {
-  return this.where({ role: { $ne: ROLES.ADMIN } });
+userSchema.query.noAdmin = function (
+  this: mongoose.QueryWithHelpers<UserDocument[], UserDocument, UserQueryHelpers>,
+) {
+  return this.where(NON_ADMIN_FILTER);
 };
 
 export const User = mongoose.model<IUser, UserModel>('User', userSchema);

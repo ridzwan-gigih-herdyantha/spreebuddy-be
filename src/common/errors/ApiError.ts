@@ -48,8 +48,8 @@ export class ApiError extends Error {
     return new ApiError(403, message, ERROR_CODES.FORBIDDEN);
   }
 
-  static notFound(message = 'Not Found') {
-    return new ApiError(404, message, ERROR_CODES.NOT_FOUND);
+  static notFound(message = 'Not Found', details?: ErrorDetail[]) {
+    return new ApiError(404, message, ERROR_CODES.NOT_FOUND, details);
   }
 
   static conflict(message = 'Conflict', details?: ErrorDetail[]) {
