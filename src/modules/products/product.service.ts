@@ -21,3 +21,9 @@ export async function listProducts({ skip, limit, search }: { skip: number; limi
     ]);
     return { products, total };
 }
+
+export async function getProductById(id: string) {
+    const product = await Product.findById(id);
+    if (!product) throw ApiError.notFound('Product not found');
+    return product;
+}

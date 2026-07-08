@@ -18,3 +18,9 @@ export async function listProducts(req: Request, res: Response) {
         paginationMeta(total, page, limit),
     );
 }
+
+export async function getProduct(req: Request, res: Response) {
+    const id = String(req.params.id);
+    const product = await productService.getProductById(id);
+    return sendSuccess(res, ProductResource.item(product), 'Product retrieved');
+}
