@@ -1,5 +1,5 @@
 import { makeResource } from '../../common/http/resource.js';
-import { UserDocument } from './user.model.js';
+import { Address, UserDocument } from './user.model.js';
 import { Role } from '../../common/constants/roles.js';
 
 export interface UserResponse {
@@ -7,7 +7,9 @@ export interface UserResponse {
   name: string;
   username: string;
   email: string;
-  avatar?: string;
+  avatar?: string|null;
+  phone: string;
+  address?: Address|null;
   role: Role;
   createdAt: Date;
   updatedAt: Date;
@@ -19,8 +21,10 @@ export const UserResource = makeResource<UserDocument, UserResponse>((u) => ({
   name: u.name,
   username: u.username,
   email: u.email,
-  avatar: u.avatar,
+  avatar: u.avatar||null,
   role: u.role,
+  phone: u.phone,
+  address: u.address||null,
   createdAt: u.createdAt,
   updatedAt: u.updatedAt,
 }));

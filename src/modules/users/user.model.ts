@@ -4,12 +4,23 @@ import { ROLES, ROLE_VALUES, Role } from '../../common/constants/roles.js';
 
 const SALT_ROUNDS = 10;
 
+export interface Address {
+  street: string;
+  district: string;
+  city: string;
+  state: string;
+  zip: string;
+  fullAddress: string;
+}
+
 export interface IUser {
   name: string;
   username: string;
   email: string;
-  avatar?: string;
+  avatar?: string|null;
   password: string;
+  address?: Address|null;
+  phone: string;
   role: Role;
   createdAt: Date;
   updatedAt: Date;
@@ -44,7 +55,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
     },
     avatar: { 
         type: String, 
-        required: false 
+        required: false,
     },
     password: { 
         type: String, 
@@ -57,6 +68,34 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
         enum: ROLE_VALUES, 
         default: ROLES.USER 
     },
+    phone: { 
+        type: String, 
+        required: true, 
+        unique: true, 
+        trim: true 
+    },
+    address: {
+      type: Object,
+      required: false,
+      street: { type: String, 
+        required: false, 
+        trim: true },
+      district: { type: String, 
+        required: false, 
+        trim: true },
+      city: { type: String, 
+        required: false, 
+        trim: true },
+      state: { type: String, 
+        required: false, 
+        trim: true },
+      zip: { type: String, 
+        required: false, 
+        trim: true },
+      fullAddress: { type: String, 
+        required: false, 
+        trim: true }, 
+    }
   },
   { timestamps: true },
 );

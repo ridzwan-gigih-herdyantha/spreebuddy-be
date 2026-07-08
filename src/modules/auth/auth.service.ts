@@ -1,4 +1,4 @@
-import { User } from '../users/user.model.js';
+import { Address, User } from '../users/user.model.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import { signToken } from '../../common/utils/jwt.js';
 
@@ -7,16 +7,25 @@ export interface RegisterInput {
   username: string;
   email: string;
   password: string;
-  avatar?: string;
+  phone: string;
+  avatar?: string|null;
+  address?: Address|null;
 }
 
 export async function register(input: RegisterInput) {
   const email = input.email.toLowerCase();
 
   // Friendly pre-check; the unique index is the real safety net (maps to CONFLICT).
-  const existing = await User.findOne({ $or: [{ username: input.username }, { email }] });
+  const existing = await User.findOne({
+    $or: [{ username: input.username }, { email }, { phone: input.phone }],
+  });
   if (existing) {
-    const field = existing.email === email ? 'email' : 'username';
+    const field =
+      existing.email === email
+        ? 'email'
+        : existing.username === input.username
+          ? 'username'
+          : 'phone';
     throw ApiError.conflict(`${field} already registered`, [
       { field, message: `${field} already exists` },
     ]);
@@ -29,6 +38,8 @@ export async function register(input: RegisterInput) {
     email,
     password: input.password,
     avatar: input.avatar,
+    address: input.address,
+    phone: input.phone,
   });
 
   return user;

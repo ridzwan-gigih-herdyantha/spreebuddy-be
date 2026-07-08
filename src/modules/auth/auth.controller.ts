@@ -12,12 +12,19 @@ const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // Express 5 forwards rejected promises to the error middleware automatically.
 export async function registerHandler(req: Request, res: Response) {
-  const { name, username, email, password } = req.body as RegisterBody;
+  const { 
+    name, 
+    username, 
+    email, 
+    password,
+    phone,
+    address
+  } = req.body as RegisterBody;
   // `avatar` arrives as an uploaded file (optional).
   const avatar = req.file ? fileService.publicPath('avatars', req.file.filename) : undefined;
 
   try {
-    const user = await register({ name, username, email, password, avatar });
+    const user = await register({ name, username, email, password, phone, avatar, address });
     return sendCreated(res, UserResource.item(user), 'Registration successful');
   } catch (err) {
     // Clean up orphaned upload if registration fails.

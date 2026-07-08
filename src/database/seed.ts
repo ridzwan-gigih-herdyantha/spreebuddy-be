@@ -12,17 +12,28 @@ async function seedUsers() {
       username: `admin${n}`,
       email: `admin${n}@spreebuddy.test`,
       password: DEFAULT_PASSWORD,
+      phone: `+628123456789${n}`,
       role: ROLES.ADMIN,
     };
   });
 
   const users = Array.from({ length: 10 }, (_, i) => {
     const n = i + 1;
+    const zip = `${10000 + n}`;
     return {
       name: `User ${n}`,
       username: `user${n}`,
       email: `user${n}@spreebuddy.test`,
       password: DEFAULT_PASSWORD,
+      phone: `+628120000${String(n).padStart(3, '0')}`,
+      address: {
+        street: `Street ${n}`,
+        district: `District ${n}`,
+        city: `City ${n}`,
+        state: `State ${n}`,
+        zip: zip,
+        fullAddress: `Street ${n}, District ${n}, City ${n}, State ${n} ${zip}`,
+      },
       role: ROLES.USER,
     };
   });
