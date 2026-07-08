@@ -2,6 +2,7 @@ import { QueryFilter } from 'mongoose';
 import { ApiError } from '../../common/errors/ApiError.js';
 import Product, { IProduct } from './product.model.js';
 import { escapeRegExp } from '../../common/utils/escapeRegex.js';
+import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 
 export async function listProducts({ skip, limit, search }: { skip: number; limit: number; search?: string }) {
     const filter: QueryFilter<IProduct> = {};
@@ -25,5 +26,18 @@ export async function listProducts({ skip, limit, search }: { skip: number; limi
 export async function getProductById(id: string) {
     const product = await Product.findById(id);
     if (!product) throw ApiError.notFound('Product not found');
+    return product;
+}
+
+export async function createProduct(input: CreateProductBody) {
+    return Product.create(input);
+}
+
+export async function updateProduct(id: string, update: UpdateProductBody) {
+    const product = await Product.findById(id);
+    if (!product) throw ApiError.notFound('Product not found');
+
+    Object.assign(product, update);
+    await product.save();
     return product;
 }

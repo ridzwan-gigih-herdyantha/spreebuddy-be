@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { sendSuccess } from '../../common/http/response.js';
+import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { parsePagination, paginationMeta } from '../../common/http/pagination.js';
 
 import * as productService from './product.service.js';
 import { ProductResource } from './product.resource.js';
+import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 
 export async function listProducts(req: Request, res: Response) {
     const { page, limit, skip } = parsePagination(req.query);
@@ -23,4 +24,15 @@ export async function getProduct(req: Request, res: Response) {
     const id = String(req.params.id);
     const product = await productService.getProductById(id);
     return sendSuccess(res, ProductResource.item(product), 'Product retrieved');
+}
+
+export async function createProductHandler(req: Request, res: Response) {
+    const product = await productService.createProduct(req.body as CreateProductBody);
+    return sendCreated(res, ProductResource.item(product), 'Product created');
+}
+
+export async function updateProductHandler(req: Request, res: Response) {
+    const id = String(req.params.id);
+    const product = await productService.updateProduct(id, req.body as UpdateProductBody);
+    return sendSuccess(res, ProductResource.item(product), 'Product updated');
 }

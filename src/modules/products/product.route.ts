@@ -1,10 +1,34 @@
-import { Router } from "express";
-import { listProducts, getProduct } from "./product.controller.js";
+import { Router } from 'express';
+import {
+  listProducts,
+  getProduct,
+  createProductHandler,
+  updateProductHandler,
+} from './product.controller.js';
+import { authenticate } from '../../common/middlewares/authenticate.middleware.js';
+import { requireRole } from '../../common/middlewares/authorize.middleware.js';
+import { validateBody } from '../../common/middlewares/validate.middleware.js';
+import { ROLES } from '../../common/constants/roles.js';
+import { createProductSchema, updateProductSchema } from './product.schema.js';
 
 const router = Router();
 
-// All user-management routes are authenticated + admin only.
 router.get('/', listProducts);
 router.get('/:id', getProduct);
+
+router.post(
+  '/',
+  authenticate,
+  requireRole(ROLES.ADMIN),
+  validateBody(createProductSchema),
+  createProductHandler,
+);
+router.patch(
+  '/:id',
+  authenticate,
+  requireRole(ROLES.ADMIN),
+  validateBody(updateProductSchema),
+  updateProductHandler,
+);
 
 export default router;
