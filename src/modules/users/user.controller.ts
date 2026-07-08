@@ -9,7 +9,8 @@ import { UpdateUserBody } from './user.schema.js';
 // Admin-only: paginated list of users. Query: ?page=1&limit=10
 export async function listUsers(req: Request, res: Response) {
   const { page, limit, skip } = parsePagination(req.query);
-  const { users, total } = await userService.listUsers(skip, limit);
+  const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+  const { users, total } = await userService.listUsers(skip, limit, search || undefined);
 
   return sendSuccess(
     res,
