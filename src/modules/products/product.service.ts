@@ -8,7 +8,11 @@ export async function listProducts({ skip, limit, search }: { skip: number; limi
 
     if (search) {
         const regex = new RegExp(escapeRegExp(search), 'i');
-        filter.$or = [{ name: regex }, { description: regex }];
+        filter.$or = [{ name: regex }, 
+            { description: regex },
+            { category: regex },
+            { type: regex }
+        ];
     }
 
     const [products, total] = await Promise.all([
