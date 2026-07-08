@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import * as userService from './user.service.js';
-import { UserResource } from './user.resource.js';
 import { sendSuccess } from '../../common/http/response.js';
 import { parsePagination, paginationMeta } from '../../common/http/pagination.js';
+import * as userService from './user.service.js';
+import { UserResource } from './user.resource.js';
 import { fileService } from '../../common/services/file.service.js';
 import { UpdateUserBody } from './user.schema.js';
 

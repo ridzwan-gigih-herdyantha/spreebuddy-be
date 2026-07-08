@@ -1,19 +1,16 @@
-import { FilterQuery } from 'mongoose';
+import { QueryFilter } from 'mongoose';
 import { User, NON_ADMIN_FILTER, IUser } from './user.model.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import { fileService } from '../../common/services/file.service.js';
 import { UpdateUserBody } from './user.schema.js';
+import { escapeRegExp } from '../../common/utils/escapeRegex.js';
 
 // Body fields plus the avatar path derived from an uploaded file.
 export type UpdateUserInput = UpdateUserBody & { avatar?: string | null };
 
-function escapeRegExp(text: string) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // Fetches a page of users plus the total count (for pagination meta).
 export async function listUsers(skip: number, limit: number, search?: string) {
-  const filter: FilterQuery<IUser> = { ...NON_ADMIN_FILTER };
+  const filter: QueryFilter<IUser> = { ...NON_ADMIN_FILTER };
 
   if (search) {
     const regex = new RegExp(escapeRegExp(search), 'i');
