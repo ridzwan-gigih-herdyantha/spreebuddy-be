@@ -25,14 +25,14 @@ export async function listUsers(req: Request, res: Response) {
 export async function updateUserHandler(req: Request, res: Response) {
   const id = String(req.params.id);
   const update: userService.UpdateUserInput = { ...(req.body as UpdateUserBody) };
-  if (req.file) update.avatar = fileService.publicPath('avatars', req.file.filename);
+  if (req.file) update.avatar = await fileService.upload(req.file, 'avatars');
 
   try {
     const user = await userService.updateUser(id, update);
     return sendSuccess(res, UserResource.item(user), 'User updated successfully');
   } catch (err) {
-    // Clean up the just-uploaded avatar if the update fails.
-    if (req.file) await fileService.remove(req.file.path);
+    // Remove the just-uploaded avatar if the update fails.
+    if (update.avatar) await fileService.removeByStoredPath(update.avatar);
     throw err;
   }
 }

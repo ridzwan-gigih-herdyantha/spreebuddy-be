@@ -15,7 +15,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files at /files/:category/:filename
+// Stream uploaded files from private R2 storage
 app.use('/files', fileRoutes);
 
 // Root ping

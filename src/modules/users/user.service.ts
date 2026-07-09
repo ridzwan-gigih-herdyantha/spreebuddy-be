@@ -36,7 +36,7 @@ export async function updateUser(id: string, update: UpdateUserInput) {
 
   // Remove the previous avatar file once it has been replaced.
   if (update.avatar && oldAvatar && oldAvatar !== update.avatar) {
-    await fileService.removeByPublicPath(oldAvatar);
+    await fileService.removeByStoredPath(oldAvatar);
   }
 
   return user;

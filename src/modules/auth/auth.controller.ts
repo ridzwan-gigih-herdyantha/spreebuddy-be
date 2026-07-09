@@ -20,15 +20,15 @@ export async function registerHandler(req: Request, res: Response) {
     phone,
     address
   } = req.body as RegisterBody;
-  // `avatar` arrives as an uploaded file (optional).
-  const avatar = req.file ? fileService.publicPath('avatars', req.file.filename) : undefined;
+  // `avatar` arrives as an uploaded file (optional) — upload it to storage first.
+  const avatar = req.file ? await fileService.upload(req.file, 'avatars') : undefined;
 
   try {
     const user = await register({ name, username, email, password, phone, avatar, address });
     return sendCreated(res, UserResource.item(user), 'Registration successful');
   } catch (err) {
-    // Clean up orphaned upload if registration fails.
-    if (req.file) await fileService.remove(req.file.path);
+    // Remove the just-uploaded avatar if registration fails.
+    if (avatar) await fileService.removeByStoredPath(avatar);
     throw err;
   }
 }

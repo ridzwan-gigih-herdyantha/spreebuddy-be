@@ -17,6 +17,15 @@ export const env = {
   dbName: required('DB_NAME', 'spreebuddy'),
   jwtSecret: required('JWT_SECRET', 'dev-insecure-secret-change-me'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
+  // Cloudflare R2 (S3-compatible) object storage. Optional locally; required for uploads.
+  s3: {
+    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT, // https://<account_id>.r2.cloudflarestorage.com
+    region: process.env.CLOUDFLARE_R2_REGION ?? 'auto',
+    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+    bucket: process.env.CLOUDFLARE_R2_BUCKET,
+    // publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL, // public bucket URL / custom domain
+  },
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';

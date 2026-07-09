@@ -1,31 +1,59 @@
 import multer from 'multer';
 import path from 'node:path';
-import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { Readable } from 'node:stream';
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { ApiError } from '../errors/ApiError.js';
+import { env } from '../../config/env.js';
 
-const UPLOAD_ROOT = 'uploads';
+const STORE_PREFIX = '/files';
 
 export interface UploadConfig {
-  category: string; // subfolder under uploads/, e.g. 'avatars'
+  category: string; // key prefix in the bucket, e.g. 'avatars'
   field: string; // multipart field name
   allowedMime: string[];
   maxSizeMB: number;
 }
 
-// Multer middleware that stores one file under uploads/<category>/.
+// Validates storage config and narrows the types (throws if missing).
+function s3Config() {
+  const { bucket, accessKeyId, secretAccessKey, region, endpoint } = env.s3;
+  if (!bucket || !accessKeyId || !secretAccessKey) {
+    throw ApiError.internal('File storage (S3/R2) is not configured');
+  }
+  return { bucket, accessKeyId, secretAccessKey, region, endpoint };
+}
+
+let client: S3Client | null = null;
+function getClient(cfg: ReturnType<typeof s3Config>): S3Client {
+  if (!client) {
+    client = new S3Client({
+      region: cfg.region,
+      endpoint: cfg.endpoint,
+      forcePathStyle: Boolean(cfg.endpoint), // needed for R2 / S3-compatible endpoints
+      credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+    });
+  }
+  return client;
+}
+
+// Stored path (kept in DB / returned to clients) <-> bucket object key.
+function keyToPath(key: string): string {
+  return `${STORE_PREFIX}/${key}`;
+}
+function pathToKey(storedPath: string): string | null {
+  return storedPath.startsWith(`${STORE_PREFIX}/`) ? storedPath.slice(STORE_PREFIX.length + 1) : null;
+}
+
+// Multer middleware that keeps the file in memory (no disk on serverless).
 function single(cfg: UploadConfig) {
-  const dir = path.join(UPLOAD_ROOT, cfg.category);
-  fs.mkdirSync(dir, { recursive: true });
-
-  const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, dir),
-    filename: (_req, file, cb) =>
-      cb(null, `${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
-  });
-
   return multer({
-    storage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: cfg.maxSizeMB * 1024 * 1024 },
     fileFilter: (_req, file, cb) =>
       cfg.allowedMime.includes(file.mimetype)
@@ -34,26 +62,46 @@ function single(cfg: UploadConfig) {
   }).single(cfg.field);
 }
 
-// Public URL served by the file route.
-function publicPath(category: string, filename: string) {
-  return `/files/${category}/${filename}`;
+// Uploads an in-memory file to the private bucket; returns its stored path.
+async function upload(file: Express.Multer.File, category: string): Promise<string> {
+  const cfg = s3Config();
+  const key = `${category}/${crypto.randomUUID()}${path.extname(file.originalname).toLowerCase()}`;
+  await getClient(cfg).send(
+    new PutObjectCommand({
+      Bucket: cfg.bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    }),
+  );
+  return keyToPath(key);
 }
 
-// On-disk location for reading/deleting.
-function diskPath(category: string, filename: string) {
-  return path.join(UPLOAD_ROOT, category, filename);
+// Fetches an object for the proxy route to stream.
+async function getObject(key: string) {
+  const cfg = s3Config();
+  const res = await getClient(cfg).send(new GetObjectCommand({ Bucket: cfg.bucket, Key: key }));
+  return {
+    body: res.Body as Readable,
+    contentType: res.ContentType,
+    contentLength: res.ContentLength,
+  };
 }
 
-// Best-effort delete; ignores missing files.
-async function remove(diskFilePath: string) {
-  await fs.promises.unlink(diskFilePath).catch(() => {});
+// Best-effort delete by object key.
+async function remove(key: string): Promise<void> {
+  const cfg = s3Config();
+  try {
+    await getClient(cfg).send(new DeleteObjectCommand({ Bucket: cfg.bucket, Key: key }));
+  } catch {
+    // ignore
+  }
 }
 
-// Delete a file given its public URL (/files/<category>/<filename>).
-async function removeByPublicPath(publicUrl: string) {
-  const parts = publicUrl.split('/').filter(Boolean); // ['files', category, filename]
-  if (parts[0] !== 'files' || parts.length < 3) return;
-  await remove(diskPath(parts[1], parts[2]));
+// Delete by the stored path (no-op for values outside our /files namespace).
+async function removeByStoredPath(storedPath: string): Promise<void> {
+  const key = pathToKey(storedPath);
+  if (key) await remove(key);
 }
 
-export const fileService = { single, publicPath, diskPath, remove, removeByPublicPath };
+export const fileService = { single, upload, getObject, remove, removeByStoredPath, pathToKey };
