@@ -1,13 +1,21 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import fileRoutes from './modules/files/file.routes.js';
+import { connectDB } from './config/db.js';
 import { sendSuccess } from './common/http/response.js';
 import { notFoundHandler } from './common/middlewares/notFound.middleware.js';
 import { errorHandler } from './common/middlewares/error.middleware.js';
+import mongoose from 'mongoose';
 
 const app: Application = express();
+
+async function ensureDbConnected(_req: Request, _res: Response, next: NextFunction) {
+  if (mongoose.connection.readyState === 1) return next();
+  try { await connectDB(); } catch {}
+  next();
+}
 
 // Core middlewares
 app.use(cors({ origin: true, credentials: true }));
@@ -24,7 +32,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 // API routes (versioned under /api)
-app.use('/api', routes);
+app.use('/api', ensureDbConnected, routes);
 
 // 404 + centralized error handling (must be last)
 app.use(notFoundHandler);
