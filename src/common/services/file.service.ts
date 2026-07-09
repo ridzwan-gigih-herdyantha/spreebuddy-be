@@ -50,8 +50,8 @@ function pathToKey(storedPath: string): string | null {
   return storedPath.startsWith(`${STORE_PREFIX}/`) ? storedPath.slice(STORE_PREFIX.length + 1) : null;
 }
 
-// Multer middleware that keeps the file in memory (no disk on serverless).
-function single(cfg: UploadConfig) {
+// Multer instance that keeps files in memory (no disk on serverless).
+function multerInstance(cfg: UploadConfig) {
   return multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: cfg.maxSizeMB * 1024 * 1024 },
@@ -59,7 +59,17 @@ function single(cfg: UploadConfig) {
       cfg.allowedMime.includes(file.mimetype)
         ? cb(null, true)
         : cb(ApiError.badRequest(`Invalid file type for "${cfg.field}"`)),
-  }).single(cfg.field);
+  });
+}
+
+// Single-file upload middleware.
+function single(cfg: UploadConfig) {
+  return multerInstance(cfg).single(cfg.field);
+}
+
+// Multi-file upload middleware (up to maxCount files under one field).
+function many(cfg: UploadConfig, maxCount: number) {
+  return multerInstance(cfg).array(cfg.field, maxCount);
 }
 
 // Uploads an in-memory file to the private bucket; returns its stored path.
@@ -104,4 +114,4 @@ async function removeByStoredPath(storedPath: string): Promise<void> {
   if (key) await remove(key);
 }
 
-export const fileService = { single, upload, getObject, remove, removeByStoredPath, pathToKey };
+export const fileService = { single, many, upload, getObject, remove, removeByStoredPath, pathToKey };

@@ -11,9 +11,13 @@ function toApiError(err: unknown): ApiError {
 
   // File upload errors (multer), e.g. file too large or unexpected field.
   if (err instanceof MulterError) {
-    const message =
-      err.code === 'LIMIT_FILE_SIZE' ? 'Avatar file too large (max 2MB)' : err.message;
-    return ApiError.badRequest(message);
+    const field = err.field ? ` for "${err.field}"` : '';
+    const messages: Record<string, string> = {
+      LIMIT_FILE_SIZE: `Uploaded file${field} is too large`,
+      LIMIT_FILE_COUNT: 'Too many files uploaded',
+      LIMIT_UNEXPECTED_FILE: `Unexpected file field${field}`,
+    };
+    return ApiError.badRequest(messages[err.code] ?? err.message);
   }
 
   // Mongoose schema validation → 422 with per-field details.
