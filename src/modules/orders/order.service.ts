@@ -5,19 +5,35 @@ import Product from '../products/product.model.js';
 type OrderItemInput = { productId: string; quantity: number };
 
 export async function createOrders(userId: string, items: OrderItemInput[]) {
-  // 1. Validate every referenced product exists.
+  // Fetch all referenced products once.
   const productIds = [...new Set(items.map((i) => i.productId))];
-  const products = await Product.find({ _id: { $in: productIds } }).select('_id');
-  const found = new Set(products.map((p) => String(p._id)));
-  const missing = productIds.filter((id) => !found.has(id));
-  if (missing.length) {
-    throw ApiError.badRequest(
-      'Some products do not exist',
-      missing.map((id) => ({ field: 'productId', message: `Product ${id} not found` })),
-    );
+  const products = await Product.find({ _id: { $in: productIds } }).select(
+    '_id name stock regularPrice salePrice',
+  );
+  const byId = new Map(products.map((p) => [String(p._id), p]));
+
+  // Aggregate the total requested quantity per product (same product may repeat).
+  const requested = new Map<string, number>();
+  for (const item of items) {
+    requested.set(item.productId, (requested.get(item.productId) ?? 0) + item.quantity);
   }
 
-  // 2. Atomically reserve stock per line and snapshot price; roll back on failure.
+  const details = [];
+  for (const [productId, qty] of requested) {
+    const product = byId.get(productId);
+    if (!product) {
+      details.push({ field: 'productId', message: `Product ${productId} not found` });
+    } else if (product.stock < qty) {
+      details.push({
+        field: 'productId',
+        message: `Insufficient stock for "${product.name}" (available: ${product.stock}, requested: ${qty})`,
+      });
+    }
+  }
+  if (details.length) {
+    throw ApiError.badRequest('Some orders could not be placed', details);
+  }
+
   const reserved: OrderItemInput[] = [];
   const orderDocs: {
     userId: string;
@@ -35,12 +51,7 @@ export async function createOrders(userId: string, items: OrderItemInput[]) {
         { new: true },
       );
       if (!product) {
-        const current = await Product.findById(item.productId).select('stock name');
-        throw ApiError.badRequest(
-          current
-            ? `Insufficient stock for "${current.name}" (available: ${current.stock}, requested: ${item.quantity})`
-            : `Product ${item.productId} not found`,
-        );
+        throw ApiError.conflict('Stock changed while placing the order, please try again');
       }
       reserved.push(item);
       const price = product.salePrice ?? product.regularPrice;
@@ -108,16 +119,15 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   return order.populate('productId');
 }
 
-// Delete: admin only, only when pending. Reserved stock is returned.
+// Delete: admin only, only when cancelled.
 export async function deleteOrder(id: string) {
   const order = await Order.findById(id);
   if (!order) throw ApiError.notFound('Order not found');
-  if (order.status !== OrderStatus.PENDING) {
+  if (order.status !== OrderStatus.CANCELLED) {
     throw ApiError.badRequest(
-      `Only pending orders can be deleted (current status: "${order.status}")`,
+      `Only cancelled orders can be deleted (current status: "${order.status}")`,
     );
   }
   await order.deleteOne();
-  await Product.updateOne({ _id: order.productId }, { $inc: { stock: order.quantity } });
   return order;
 }
