@@ -16,6 +16,35 @@ function shapeProduct(p: ProductDocument) {
   };
 }
 
+// Structured, FE-renderable side-by-side comparison (products x attributes).
+export function buildComparison(products: ProductDocument[]) {
+  return {
+    type: 'comparison' as const,
+    fields: [
+      { key: 'regularPrice', label: 'Regular Price' },
+      { key: 'salePrice', label: 'Sale Price' },
+      { key: 'effectivePrice', label: 'Effective Price' },
+      { key: 'stock', label: 'Stock' },
+      { key: 'category', label: 'Category' },
+      { key: 'type', label: 'Type' },
+      { key: 'weight', label: 'Weight' },
+      { key: 'dimensions', label: 'Dimensions' },
+    ],
+    products: products.map((p) => ({
+      id: p.id,
+      name: p.name,
+      regularPrice: p.regularPrice,
+      salePrice: p.salePrice ?? null,
+      effectivePrice: p.salePrice ?? p.regularPrice,
+      stock: p.stock,
+      category: p.category,
+      type: p.type,
+      weight: p.weight,
+      dimensions: p.dimensions ?? null,
+    })),
+  };
+}
+
 // Tool schemas exposed to Gemini (the "List Allowed Queries").
 export const functionDeclarations: FunctionDeclaration[] = [
   {
@@ -62,6 +91,22 @@ export const functionDeclarations: FunctionDeclaration[] = [
     },
   },
   {
+    name: 'compare_products',
+    description:
+      'Build a structured side-by-side comparison of 2-3 products by their ids. Use this whenever the user wants to compare specific products; then summarize and recommend.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        productIds: {
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          description: '2 to 3 product ids to compare.',
+        },
+      },
+      required: ['productIds'],
+    },
+  },
+  {
     name: 'list_products',
     description: 'List products from the catalog (useful to suggest alternatives). Returns up to 20.',
     parameters: { type: Type.OBJECT, properties: {} },
@@ -72,7 +117,11 @@ type ToolArgs = Record<string, unknown>;
 
 // Executes a tool call with the authenticated user's context. Always returns
 // a JSON-serializable object (errors included) so the model can react.
-export async function executeTool(name: string, args: ToolArgs, ctx: { userId: string }) {
+export async function executeTool(
+  name: string,
+  args: ToolArgs,
+  ctx: { userId: string },
+): Promise<Record<string, unknown>> {
   try {
     switch (name) {
       case 'get_wishlist': {
@@ -104,6 +153,14 @@ export async function executeTool(name: string, args: ToolArgs, ctx: { userId: s
         const ids = Array.isArray(args.productIds) ? args.productIds.map(String) : [];
         const products = await productService.getProductByMultiId(ids);
         return { products: products.map(shapeProduct) };
+      }
+      case 'compare_products': {
+        const ids = Array.isArray(args.productIds) ? args.productIds.map(String) : [];
+        const products = await productService.getProductByMultiId(ids);
+        if (products.length < 2) {
+          return { error: 'Need at least 2 valid products to compare.' };
+        }
+        return buildComparison(products);
       }
       case 'list_products': {
         const products = await Product.find().limit(20);

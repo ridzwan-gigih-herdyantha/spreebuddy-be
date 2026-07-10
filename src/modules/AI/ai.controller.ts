@@ -34,6 +34,10 @@ export async function deleteSessionHandler(req: Request, res: Response) {
 
 export async function sendMessageHandler(req: Request, res: Response) {
   const { message } = req.body as SendMessageBody;
-  const { reply } = await aiService.sendMessage(String(req.params.id), req.user!.id, message);
-  return sendSuccess(res, { reply }, 'Reply generated');
+  const { reply, attachments } = await aiService.sendMessage(
+    String(req.params.id),
+    req.user!.id,
+    message,
+  );
+  return sendSuccess(res, { reply, attachments }, 'Reply generated');
 }

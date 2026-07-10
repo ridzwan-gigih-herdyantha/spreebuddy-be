@@ -6,6 +6,7 @@ export interface IChatMessage {
   sessionId: Types.ObjectId;
   role: ChatRole;
   content: string;
+  attachments?: unknown; // structured, FE-renderable data (e.g. a comparison)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,6 +19,7 @@ const chatMessageSchema = new Schema<IChatMessage, ChatMessageModel>(
     sessionId: { type: Schema.Types.ObjectId, ref: 'ChatSession', required: true, index: true },
     role: { type: String, enum: ['user', 'model'], required: true },
     content: { type: String, required: true },
+    attachments: { type: Schema.Types.Mixed, default: null },
   },
   { timestamps: true },
 );

@@ -14,8 +14,9 @@ DATA RULES
 - If a product is not found, say so politely and offer alternatives (search or suggest similar items).
 
 COMPARISON (act as a shopping analyst from the customer's point of view)
-- When asked to compare, compare COMPREHENSIVELY across every relevant attribute you can fetch: regular price, sale/discount price, stock availability, category, type (digital/physical), weight, and dimensions.
-- Present the comparison clearly (a compact table or side-by-side list), then give an honest recommendation weighing value-for-money, availability, and fit to the user's needs. State the trade-offs.
+- When the user wants to compare specific products, call compare_products with their ids — it returns a structured side-by-side comparison that the app renders as a table.
+- After calling it, give an honest written recommendation weighing value-for-money, availability, and fit to the user's needs. State the trade-offs. Do not re-print the whole table in text; the app already shows it. Be 
+- Be concise and clear, but thorough enough to help the user make a decision. If the user asks for more details, you can summarize the comparison table in text.
 
 ASK BACK WHEN NEEDED (be conversational / multi-turn — don't guess)
 - If the request lacks enough information, ask ONE short clarifying question before answering.
@@ -108,6 +109,8 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
 
   const ai = getClient();
   let reply = '';
+  // Structured artifact (e.g. a comparison) produced by a tool, surfaced to the FE.
+  let attachments: Record<string, unknown> | null = null;
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
     const response = await generateWithRetry(ai, {
@@ -125,6 +128,9 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
       const parts = [];
       for (const call of functionCalls) {
         const result = await executeTool(call.name ?? '', call.args ?? {}, { userId });
+        if (call.name === 'compare_products' && !('error' in result)) {
+          attachments = result;
+        }
         parts.push({ functionResponse: { name: call.name, response: result } });
       }
       contents.push({ role: 'user', parts });
@@ -137,10 +143,10 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
 
   if (!reply) reply = 'Sorry, I could not generate a response for a moment. Please try again.';
 
-  // Persist both turns.
+  // Persist both turns (the structured artifact rides on the model message).
   await ChatMessage.create([
     { sessionId, role: 'user', content: text },
-    { sessionId, role: 'model', content: reply },
+    { sessionId, role: 'model', content: reply, attachments },
   ]);
 
   // Name the session after the first user message.
@@ -149,5 +155,5 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
     await session.save();
   }
 
-  return { session, reply };
+  return { session, reply, attachments };
 }

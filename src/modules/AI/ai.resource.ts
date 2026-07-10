@@ -20,6 +20,7 @@ export interface ChatMessageResponse {
   id: string;
   role: string;
   content: string;
+  attachments?: unknown;
   createdAt: Date;
 }
 
@@ -27,5 +28,6 @@ export const ChatMessageResource = makeResource<ChatMessageDocument, ChatMessage
   id: m.id,
   role: m.role,
   content: m.content,
+  attachments: m.attachments ?? null,
   createdAt: m.createdAt,
 }));
