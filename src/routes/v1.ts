@@ -5,6 +5,7 @@ import authRoutes from '../modules/auth/auth.routes.js';
 import userRoutes from '../modules/users/user.routes.js';
 import productRoutes from '../modules/products/product.route.js';
 import wishlistRoutes from '../modules/wishlists/wishlist.route.js';
+import orderRoutes from '../modules/orders/order.route.js';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.get('/', (_req, res) => {
         users: 'GET /api/v1/users (admin)',
         products: 'GET /api/v1/products',
         wishlist: 'GET /api/v1/wishlists',
+        orders: 'GET /api/v1/orders',
       },
     },
     'API v1',
@@ -33,5 +35,6 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/products', productRoutes);
 router.use('/wishlists', wishlistRoutes);
+router.use('/orders', orderRoutes);
 
 export default router;
