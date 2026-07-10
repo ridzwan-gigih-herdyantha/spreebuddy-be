@@ -26,6 +26,11 @@ export const env = {
     bucket: process.env.CLOUDFLARE_R2_BUCKET,
     // publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL, // public bucket URL / custom domain
   },
+  // Google Gemini (AI chat assistant). Optional locally; required for the chat feature.
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+  },
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';

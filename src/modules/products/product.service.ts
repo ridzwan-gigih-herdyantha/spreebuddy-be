@@ -1,6 +1,6 @@
 import { QueryFilter } from 'mongoose';
 import { ApiError } from '../../common/errors/ApiError.js';
-import Product, { IProduct } from './product.model.js';
+import Product, { IProduct, ProductDocument } from './product.model.js';
 import { escapeRegExp } from '../../common/utils/escapeRegex.js';
 import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 
@@ -21,6 +21,10 @@ export async function listProducts({ skip, limit, search }: { skip: number; limi
         Product.countDocuments(filter),
     ]);
     return { products, total };
+}
+
+export async function getProductByMultiId(ids: string[]): Promise<ProductDocument[]> {
+    return Product.find({ _id: { $in: ids } });
 }
 
 export async function getProductById(id: string) {

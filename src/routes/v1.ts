@@ -6,6 +6,7 @@ import userRoutes from '../modules/users/user.routes.js';
 import productRoutes from '../modules/products/product.route.js';
 import wishlistRoutes from '../modules/wishlists/wishlist.route.js';
 import orderRoutes from '../modules/orders/order.route.js';
+import aiRoutes from '../modules/AI/ai.route.js';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/users', userRoutes);
 router.use('/products', productRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;
