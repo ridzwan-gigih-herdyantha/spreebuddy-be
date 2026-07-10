@@ -2,10 +2,15 @@ import { connectDB, disconnectDB } from '../../config/db.js';
 
 import userSeeder from './user.seeder.js';
 import productSeeder from './product.seeder.js';
+import wishlistSeeder from './wishlist.seeder.js';
+import orderSeeder from './order.seeder.js';
 
+// Order matters: wishlist & order depend on users and products.
 const seeders = [
   userSeeder,
   productSeeder,
+  wishlistSeeder,
+  orderSeeder,
 ];
 
 async function run() {
