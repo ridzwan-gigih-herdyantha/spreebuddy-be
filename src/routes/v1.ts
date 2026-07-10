@@ -37,6 +37,6 @@ router.use('/users', userRoutes);
 router.use('/products', productRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
-router.use('/ai', aiRoutes);
+router.use('/sessions', aiRoutes);
 
 export default router;

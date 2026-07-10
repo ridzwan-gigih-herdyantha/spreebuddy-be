@@ -78,6 +78,11 @@ async function getOwnedSession(sessionId: string, userId: string) {
   return session;
 }
 
+// Pre-flight ownership check (used before SSE headers are sent).
+export async function assertSession(sessionId: string, userId: string) {
+  await getOwnedSession(sessionId, userId);
+}
+
 export async function getSessionMessages(sessionId: string, userId: string) {
   const session = await getOwnedSession(sessionId, userId);
   const messages = await ChatMessage.find({ sessionId }).sort({ createdAt: 1, _id: 1 });
@@ -156,4 +161,93 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
   }
 
   return { session, reply, attachments };
+}
+
+export function friendlyAiError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/429|quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(msg)) {
+    return 'AI quota or rate limit reached. Please try again later.';
+  }
+  if (/503|UNAVAILABLE|overloaded|high demand/i.test(msg)) {
+    return 'AI service is busy, please try again in a moment.';
+  }
+  return err instanceof ApiError ? err.message : 'AI request failed. Please try again.';
+}
+
+export type StreamEvent =
+  | { type: 'chunk'; text: string }
+  | { type: 'attachment'; attachment: Record<string, unknown> }
+  | { type: 'done'; attachments: Record<string, unknown> | null };
+
+// Streaming variant of sendMessage: yields text deltas as they arrive, runs the
+// same tool loop, then persists both turns.
+export async function* streamMessage(
+  sessionId: string,
+  userId: string,
+  text: string,
+): AsyncGenerator<StreamEvent> {
+  const session = await getOwnedSession(sessionId, userId);
+
+  const past = await ChatMessage.find({ sessionId })
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(HISTORY_LIMIT);
+  past.reverse();
+
+  const contents: Content[] = past.map((m) => ({ role: m.role, parts: [{ text: m.content }] }));
+  contents.push({ role: 'user', parts: [{ text }] });
+
+  const ai = getClient();
+  let reply = '';
+  let attachments: Record<string, unknown> | null = null;
+
+  for (let step = 0; step < MAX_TOOL_STEPS; step++) {
+    const stream = await ai.models.generateContentStream({
+      model: env.gemini.model,
+      contents,
+      config: { systemInstruction: SYSTEM_INSTRUCTION, tools: [{ functionDeclarations }] },
+    });
+
+    let stepText = '';
+    const calls = [];
+    for await (const chunk of stream) {
+      if (chunk.functionCalls?.length) calls.push(...chunk.functionCalls);
+      const delta = chunk.text ?? '';
+      if (delta) {
+        stepText += delta;
+        yield { type: 'chunk', text: delta };
+      }
+    }
+
+    if (calls.length > 0) {
+      contents.push({ role: 'model', parts: calls.map((c) => ({ functionCall: c })) });
+      const parts = [];
+      for (const call of calls) {
+        const result = await executeTool(call.name ?? '', call.args ?? {}, { userId });
+        if (call.name === 'compare_products' && !('error' in result)) {
+          attachments = result;
+          yield { type: 'attachment', attachment: result };
+        }
+        parts.push({ functionResponse: { name: call.name, response: result } });
+      }
+      contents.push({ role: 'user', parts });
+      continue;
+    }
+
+    reply = stepText;
+    break;
+  }
+
+  if (!reply) reply = 'Sorry, I could not generate a response for a moment. Please try again.';
+
+  await ChatMessage.create([
+    { sessionId, role: 'user', content: text },
+    { sessionId, role: 'model', content: reply, attachments },
+  ]);
+
+  if (session.title === 'New chat') {
+    session.title = text.slice(0, 60);
+    await session.save();
+  }
+
+  yield { type: 'done', attachments };
 }

@@ -41,3 +41,33 @@ export async function sendMessageHandler(req: Request, res: Response) {
   );
   return sendSuccess(res, { reply, attachments }, 'Reply generated');
 }
+
+// Server-Sent Events: streams text deltas as the AI generates them.
+export async function streamMessageHandler(req: Request, res: Response) {
+  const { message } = req.body as SendMessageBody;
+  const sessionId = String(req.params.id);
+  const userId = req.user!.id;
+
+  // Check ownership before committing SSE headers, so "not found" returns a real 404.
+  await aiService.assertSession(sessionId, userId);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const send = (event: string, data: unknown) =>
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+
+  try {
+    for await (const ev of aiService.streamMessage(sessionId, userId, message)) {
+      if (ev.type === 'chunk') send('chunk', { text: ev.text });
+      else if (ev.type === 'attachment') send('attachment', ev.attachment);
+      else if (ev.type === 'done') send('done', { attachments: ev.attachments });
+    }
+  } catch (err) {
+    send('error', { message: aiService.friendlyAiError(err) });
+  } finally {
+    res.end();
+  }
+}
