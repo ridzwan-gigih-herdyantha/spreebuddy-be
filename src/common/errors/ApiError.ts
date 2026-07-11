@@ -59,4 +59,8 @@ export class ApiError extends Error {
   static internal(message = 'Internal Server Error') {
     return new ApiError(500, message, ERROR_CODES.INTERNAL, undefined, false);
   }
+
+  static tooManyRequests(message = 'Too Many Requests') {
+    return new ApiError(429, message, ERROR_CODES.TOO_MANY_REQUESTS);
+  }
 }
