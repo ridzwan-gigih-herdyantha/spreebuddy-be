@@ -1,4 +1,5 @@
 import { makeResource } from '../../common/http/resource.js';
+import { formatDateDMY } from '../../common/utils/formatDate.js';
 import { WishlistDocument } from './wishlist.model.js';
 import { ProductResource, ProductResponse } from '../products/product.resource.js';
 import { ProductDocument } from '../products/product.model.js';
@@ -7,7 +8,7 @@ export interface WishlistResponse {
   id: string;
   note?: string | null;
   product: ProductResponse | null;
-  createdAt: Date;
+  createdAt: string | null;
 }
 
 export const WishlistResource = makeResource<WishlistDocument, WishlistResponse>((w) => ({
@@ -17,5 +18,5 @@ export const WishlistResource = makeResource<WishlistDocument, WishlistResponse>
   product: w.populated('productId')
     ? ProductResource.item(w.productId as unknown as ProductDocument)
     : null,
-  createdAt: w.createdAt,
+  createdAt: formatDateDMY(w.createdAt),
 }));

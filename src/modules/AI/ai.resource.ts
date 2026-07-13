@@ -1,19 +1,20 @@
 import { makeResource } from '../../common/http/resource.js';
+import { formatDateDMY } from '../../common/utils/formatDate.js';
 import { ChatSessionDocument } from './chatSession.model.js';
 import { ChatMessageDocument } from './chatMessage.model.js';
 
 export interface ChatSessionResponse {
   id: string;
   title: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export const ChatSessionResource = makeResource<ChatSessionDocument, ChatSessionResponse>((s) => ({
   id: s.id,
   title: s.title,
-  createdAt: s.createdAt,
-  updatedAt: s.updatedAt,
+  createdAt: formatDateDMY(s.createdAt),
+  updatedAt: formatDateDMY(s.updatedAt),
 }));
 
 export interface ChatMessageResponse {
@@ -21,7 +22,7 @@ export interface ChatMessageResponse {
   role: string;
   content: string;
   attachments?: unknown;
-  createdAt: Date;
+  createdAt: string | null;
 }
 
 export const ChatMessageResource = makeResource<ChatMessageDocument, ChatMessageResponse>((m) => ({
@@ -29,5 +30,5 @@ export const ChatMessageResource = makeResource<ChatMessageDocument, ChatMessage
   role: m.role,
   content: m.content,
   attachments: m.attachments ?? null,
-  createdAt: m.createdAt,
+  createdAt: formatDateDMY(m.createdAt),
 }));

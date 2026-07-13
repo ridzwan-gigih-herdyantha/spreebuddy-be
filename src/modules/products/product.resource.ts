@@ -1,4 +1,5 @@
 import { makeResource } from '../../common/http/resource.js';
+import { formatDateDMY } from '../../common/utils/formatDate.js';
 import {ProductDocument } from './product.model.js';
 
 export interface ProductResponse {
@@ -16,8 +17,8 @@ export interface ProductResponse {
   };
   stock: number;
   category: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export const ProductResource = makeResource<ProductDocument, ProductResponse>((p) => ({
@@ -31,6 +32,6 @@ export const ProductResource = makeResource<ProductDocument, ProductResponse>((p
   dimensions: p.dimensions,
   stock: p.stock,
   category: p.category,
-  createdAt: p.createdAt,
-  updatedAt: p.updatedAt,
+  createdAt: formatDateDMY(p.createdAt),
+  updatedAt: formatDateDMY(p.updatedAt),
 }));
