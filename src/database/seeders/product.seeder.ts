@@ -1,6 +1,7 @@
 import Product from '../../modules/products/product.model.js';
 import { fakerID_ID as faker } from '@faker-js/faker';
 import { ProductType } from '../../modules/products/product.model.js';
+import { CATEGORY_NAMES } from './category.seeder.js';
 
 export default {
   name: 'product',
@@ -57,7 +58,7 @@ export default {
           max: 100,
         }),
 
-        category: faker.commerce.department(),
+        category: faker.helpers.arrayElement(CATEGORY_NAMES),
       };
     });
 
