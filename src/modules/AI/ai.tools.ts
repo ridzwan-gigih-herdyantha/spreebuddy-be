@@ -125,7 +125,7 @@ export async function executeTool(
   try {
     switch (name) {
       case 'get_wishlist': {
-        const { items } = await wishlistService.listWishlist(ctx.userId, 0, 50);
+        const { items } = await wishlistService.listWishlist(ctx.userId, { skip: 0, limit: 50 });
         return {
           items: items
             .filter((w) => w.populated('productId'))
