@@ -2,11 +2,15 @@ import { ApiError } from '../../common/errors/ApiError.js';
 import Wishlist from './wishlist.model.js';
 import Product from '../products/product.model.js';
 
-export async function listWishlist(userId: string, skip: number, limit: number) {
-  const [items, total] = await Promise.all([
-    Wishlist.find({ userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('productId'),
-    Wishlist.countDocuments({ userId }),
-  ]);
+export async function listWishlist(
+  userId: string,
+  { skip, limit, all = false }: { skip: number; limit: number; all?: boolean },
+) {
+  const query = Wishlist.find({ userId }).sort({ createdAt: -1 }).populate('productId');
+  // `all` returns the full wishlist in one go (no pagination).
+  if (!all) query.skip(skip).limit(limit);
+
+  const [items, total] = await Promise.all([query, Wishlist.countDocuments({ userId })]);
   return { items, total };
 }
 

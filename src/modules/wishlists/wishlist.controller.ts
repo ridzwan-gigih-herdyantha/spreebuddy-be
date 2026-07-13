@@ -7,8 +7,22 @@ import { AddWishlistBody } from './wishlist.schema.js';
 
 // All handlers operate on the authenticated user's own wishlist (req.user.id).
 export async function listWishlistHandler(req: Request, res: Response) {
+  // `?all=true` returns the whole wishlist without pagination (handy for dropdowns / counts).
+  const all = ['true', '1', 'yes'].includes(String(req.query.all).toLowerCase());
+
+  if (all) {
+    const { items, total } = await wishlistService.listWishlist(req.user!.id, { skip: 0, limit: 0, all: true });
+    return sendSuccess(
+      res,
+      WishlistResource.collection(items),
+      'Wishlist retrieved',
+      200,
+      paginationMeta(total, 1, total || 1),
+    );
+  }
+
   const { page, limit, skip } = parsePagination(req.query);
-  const { items, total } = await wishlistService.listWishlist(req.user!.id, skip, limit);
+  const { items, total } = await wishlistService.listWishlist(req.user!.id, { skip, limit });
   return sendSuccess(
     res,
     WishlistResource.collection(items),
