@@ -4,6 +4,7 @@ import healthRoutes from '../modules/health/health.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import userRoutes from '../modules/users/user.routes.js';
 import productRoutes from '../modules/products/product.route.js';
+import categoryRoutes from '../modules/categories/category.route.js';
 import wishlistRoutes from '../modules/wishlists/wishlist.route.js';
 import orderRoutes from '../modules/orders/order.route.js';
 import aiRoutes from '../modules/AI/ai.route.js';
@@ -62,6 +63,7 @@ router.get('/', (_req, res) => {
         me: 'GET /api/v1/auth/me',
         users: 'GET /api/v1/users (admin)',
         products: 'GET /api/v1/products',
+        categories: 'GET /api/v1/categories',
         wishlist: 'GET /api/v1/wishlists',
         orders: 'GET /api/v1/orders',
       },
@@ -75,6 +77,7 @@ router.use('/health', healthRoutes);
 router.use('/auth', AuthLimiter, authRoutes);
 router.use('/users', userRoutes);
 router.use('/products', productRoutes);
+router.use('/categories', categoryRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
 router.use('/sessions', AiLimiter, aiRoutes);

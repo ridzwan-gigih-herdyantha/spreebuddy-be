@@ -8,10 +8,12 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ApiError } from '../errors/ApiError.js';
 import { env } from '../../config/env.js';
 
 const STORE_PREFIX = '/files';
+const DEFAULT_TEMP_URL_TTL = 3600; // 1 hour
 
 export interface UploadConfig {
   category: string; // key prefix in the bucket, e.g. 'avatars'
@@ -98,6 +100,29 @@ async function getObject(key: string) {
   };
 }
 
+// Presigned, time-limited URL for direct client access to a private object.
+// Accepts a stored path (e.g. "/files/avatars/x.png"); returns null for values
+// outside our namespace or when storage isn't configured.
+async function getTemporaryUrl(
+  storedPath: string | null | undefined,
+  expiresIn: number = DEFAULT_TEMP_URL_TTL,
+): Promise<string | null> {
+  if (!storedPath) return null;
+  const key = pathToKey(storedPath);
+  if (!key) return null;
+
+  try {
+    const cfg = s3Config();
+    return await getSignedUrl(
+      getClient(cfg),
+      new GetObjectCommand({ Bucket: cfg.bucket, Key: key }),
+      { expiresIn },
+    );
+  } catch {
+    return null;
+  }
+}
+
 // Best-effort delete by object key.
 async function remove(key: string): Promise<void> {
   const cfg = s3Config();
@@ -114,4 +139,4 @@ async function removeByStoredPath(storedPath: string): Promise<void> {
   if (key) await remove(key);
 }
 
-export const fileService = { single, many, upload, getObject, remove, removeByStoredPath, pathToKey };
+export const fileService = { single, many, upload, getObject, getTemporaryUrl, remove, removeByStoredPath, pathToKey };

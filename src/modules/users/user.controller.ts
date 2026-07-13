@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { sendSuccess } from '../../common/http/response.js';
 import { parsePagination, paginationMeta } from '../../common/http/pagination.js';
 import * as userService from './user.service.js';
-import { UserResource } from './user.resource.js';
+import { serializeUserWithUrls, serializeUsersWithUrls } from './user.resource.js';
 import { fileService } from '../../common/services/file.service.js';
 import { UpdateUserBody } from './user.schema.js';
 
@@ -14,7 +14,7 @@ export async function listUsers(req: Request, res: Response) {
 
   return sendSuccess(
     res,
-    UserResource.collection(users),
+    await serializeUsersWithUrls(users),
     'Users retrieved',
     200,
     paginationMeta(total, page, limit),
@@ -29,7 +29,7 @@ export async function updateUserHandler(req: Request, res: Response) {
 
   try {
     const user = await userService.updateUser(id, update);
-    return sendSuccess(res, UserResource.item(user), 'User updated successfully');
+    return sendSuccess(res, await serializeUserWithUrls(user), 'User updated successfully');
   } catch (err) {
     // Remove the just-uploaded avatar if the update fails.
     if (update.avatar) await fileService.removeByStoredPath(update.avatar);

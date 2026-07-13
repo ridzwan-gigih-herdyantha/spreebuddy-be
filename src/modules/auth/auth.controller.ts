@@ -5,7 +5,7 @@ import { ApiError } from '../../common/errors/ApiError.js';
 import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { isProduction } from '../../config/env.js';
 import { User } from '../users/user.model.js';
-import { UserResource } from '../users/user.resource.js';
+import { serializeUserWithUrls } from '../users/user.resource.js';
 import { fileService } from '../../common/services/file.service.js';
 
 const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -25,7 +25,7 @@ export async function registerHandler(req: Request, res: Response) {
 
   try {
     const user = await register({ name, username, email, password, phone, avatar, address });
-    return sendCreated(res, UserResource.item(user), 'Registration successful');
+    return sendCreated(res, await serializeUserWithUrls(user), 'Registration successful');
   } catch (err) {
     // Remove the just-uploaded avatar if registration fails.
     if (avatar) await fileService.removeByStoredPath(avatar);
@@ -51,7 +51,7 @@ export async function loginHandler(req: Request, res: Response) {
     maxAge: TOKEN_COOKIE_MAX_AGE,
   });
 
-  return sendSuccess(res, { token, user: UserResource.item(user) }, 'Login successful');
+  return sendSuccess(res, { token, user: await serializeUserWithUrls(user) }, 'Login successful');
 }
 
 export function logoutHandler(_req: Request, res: Response) {
@@ -63,5 +63,5 @@ export function logoutHandler(_req: Request, res: Response) {
 export async function meHandler(req: Request, res: Response) {
   const user = await User.findById(req.user!.id);
   if (!user) throw ApiError.notFound('User not found');
-  return sendSuccess(res, UserResource.item(user), 'Current user');
+  return sendSuccess(res, await serializeUserWithUrls(user), 'Current user');
 }

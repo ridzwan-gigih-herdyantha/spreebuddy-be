@@ -1,13 +1,15 @@
 import { connectDB, disconnectDB } from '../../config/db.js';
 
 import userSeeder from './user.seeder.js';
+import categorySeeder from './category.seeder.js';
 import productSeeder from './product.seeder.js';
 import wishlistSeeder from './wishlist.seeder.js';
 import orderSeeder from './order.seeder.js';
 
-// Order matters: wishlist & order depend on users and products.
+// Order matters: products depend on categories; wishlist & order depend on users and products.
 const seeders = [
   userSeeder,
+  categorySeeder,
   productSeeder,
   wishlistSeeder,
   orderSeeder,

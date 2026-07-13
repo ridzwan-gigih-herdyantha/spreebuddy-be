@@ -3,6 +3,7 @@ import { ApiError } from '../../common/errors/ApiError.js';
 import Product, { IProduct, ProductDocument } from './product.model.js';
 import { escapeRegExp } from '../../common/utils/escapeRegex.js';
 import { CreateProductBody, UpdateProductBody } from './product.schema.js';
+import { assertCategoryExists } from '../categories/category.service.js';
 
 export async function listProducts({ skip, limit, search }: { skip: number; limit: number; search?: string }) {
     const filter: QueryFilter<IProduct> = {};
@@ -34,12 +35,15 @@ export async function getProductById(id: string) {
 }
 
 export async function createProduct(input: CreateProductBody) {
+    await assertCategoryExists(input.category);
     return Product.create(input);
 }
 
 export async function updateProduct(id: string, update: UpdateProductBody) {
     const product = await Product.findById(id);
     if (!product) throw ApiError.notFound('Product not found');
+
+    if (update.category !== undefined) await assertCategoryExists(update.category);
 
     Object.assign(product, update);
     await product.save();
