@@ -10,7 +10,7 @@ import orderRoutes from '../modules/orders/order.route.js';
 import aiRoutes from '../modules/AI/ai.route.js';
 import cartRoutes from '../modules/cart/cart.route.js';
 
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
 // import MongoStore from 'rate-limit-mongo';
 // import { env } from '../config/env.js';
 import { ApiError } from '../common/errors/ApiError.js';
