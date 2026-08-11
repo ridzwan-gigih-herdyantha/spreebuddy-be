@@ -17,7 +17,7 @@ import { ApiError } from '../common/errors/ApiError.js';
 
 const router = Router();
 
-const AuthLimiter = rateLimit({handler: (req, res) => {
+const AuthLimiter = rateLimit({handler: () => {
     throw ApiError.tooManyRequests('Too many requests from this IP, please try again later.');
   },
   // store: new MongoStore({

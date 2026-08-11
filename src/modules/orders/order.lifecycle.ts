@@ -1,8 +1,10 @@
+import { Types } from 'mongoose';
 import { ApiError } from '../../common/errors/ApiError.js';
 import Product from '../products/product.model.js';
 import Order, { OrderStatus, OrderDocument } from './order.model.js';
 
 export type OrderItemInput = { productId: string; quantity: number };
+type ProductRef = string | Types.ObjectId;
 
 // ─── State machine ────────────────────────────────────────────────────────────
 // Single source of truth for: which transitions are legal, and what each does to
@@ -38,12 +40,12 @@ export function allowedNextStatuses(from: OrderStatus): OrderStatus[] {
 
 // ─── Stock ledger (the only writer of Product.stock for orders) ────────────────
 
-async function releaseStock(productId: OrderDocument['productId'], quantity: number): Promise<void> {
+async function releaseStock(productId: ProductRef, quantity: number): Promise<void> {
   await Product.updateOne({ _id: productId }, { $inc: { stock: quantity } });
 }
 
 // Atomic reserve; throws if the product no longer has enough stock.
-async function reserveStock(productId: OrderDocument['productId'], quantity: number): Promise<void> {
+async function reserveStock(productId: ProductRef, quantity: number): Promise<void> {
   const product = await Product.findOneAndUpdate(
     { _id: productId, stock: { $gte: quantity } },
     { $inc: { stock: -quantity } },
