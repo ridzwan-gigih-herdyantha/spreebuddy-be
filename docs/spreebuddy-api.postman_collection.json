@@ -1,0 +1,3910 @@
+{
+  "info": {
+    "name": "SpreeBuddy API",
+    "description": "Dokumentasi lengkap SpreeBuddy Backend (Express 5 + MongoDB).\n\n## Base URL\nSet variable `baseUrl` (default `http://localhost:3000`).\n\n## Autentikasi\nLogin (`POST /api/v1/auth/login`) mengembalikan JWT di `data.token` DAN men-set cookie httpOnly `token`. API menerima keduanya: header `Authorization: Bearer <token>` atau cookie. Collection ini memakai Bearer via variable `{{token}}` (otomatis tersimpan setelah request Login dijalankan). Untuk endpoint admin, isi variable `{{adminToken}}` (login sebagai admin lalu salin token).\n\n## Format Response (seragam)\nSukses:\n```json\n{ \"success\": true, \"message\": \"...\", \"data\": ..., \"meta\": { ...opsional... } }\n```\nError:\n```json\n{ \"success\": false, \"message\": \"...\", \"error\": { \"code\": \"...\", \"details\": [ { \"field\": \"...\", \"message\": \"...\" } ] } }\n```\n`error.code`: `BAD_REQUEST` (400), `UNAUTHORIZED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `CONFLICT` (409), `VALIDATION_ERROR` (422), `TOO_MANY_REQUESTS` (429), `INTERNAL_SERVER_ERROR` (500).\n\n## Pagination\nList endpoint menerima `?page` (>=1, default 1) dan `?limit` (1-100, default 10). Response menyertakan `meta`: `{ total, page, limit, totalPages, hasPrevPage, hasNextPage }`. Query pagination tidak valid -> 422.\n\n## Format tanggal\nResource User & Product memformat `createdAt`/`updatedAt` sebagai `dd/mm/yyyy`. Resource Order, Wishlist, dan AI Chat mengembalikan ISO 8601.\n\n## Role\n`user` dan `admin`. Endpoint bertanda (admin) menolak role lain dengan 403.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": "68721a0c2f9b3c0012ab34cd"
+    },
+    {
+      "key": "orderId",
+      "value": "68721b7e2f9b3c0012ab34ff"
+    },
+    {
+      "key": "sessionId",
+      "value": "68721c992f9b3c0012ab3511"
+    },
+    {
+      "key": "userId",
+      "value": "68721d4a2f9b3c0012ab3522"
+    }
+  ],
+  "item": [
+    {
+      "name": "Root & Health",
+      "item": [
+        {
+          "name": "Root ping",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
+            "description": "Ping dasar API. Publik, tanpa auth."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Spreebuddy API\",\n  \"data\": { \"name\": \"Spreebuddy API\", \"docs\": \"/api/v1\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "API v1 index",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1"
+              ]
+            },
+            "description": "Daftar ringkas endpoint utama. Publik."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"API v1\",\n  \"data\": {\n    \"endpoints\": {\n      \"register\": \"POST /api/v1/auth/register\",\n      \"login\": \"POST /api/v1/auth/login\",\n      \"me\": \"GET /api/v1/auth/me\",\n      \"users\": \"GET /api/v1/users (admin)\",\n      \"products\": \"GET /api/v1/products\",\n      \"categories\": \"GET /api/v1/categories\",\n      \"wishlist\": \"GET /api/v1/wishlists\",\n      \"orders\": \"GET /api/v1/orders\",\n      \"cart\": \"GET /api/v1/cart\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Health check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "description": "Readiness probe. 200 saat DB up, 503 saat DB down. CATATAN: body-nya TIDAK memakai envelope standar."
+          },
+          "response": [
+            {
+              "name": "200 OK — semua dependency up",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/health"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"status\": \"ok\",\n  \"uptime\": 1234.56,\n  \"timestamp\": \"2026-07-11T09:00:00.000Z\",\n  \"services\": { \"database\": \"up\" }\n}"
+            },
+            {
+              "name": "503 Service Unavailable — database down",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/health"
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"status\": \"unavailable\",\n  \"uptime\": 1234.56,\n  \"timestamp\": \"2026-07-11T09:00:00.000Z\",\n  \"services\": { \"database\": \"down\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Budi Santoso",
+                  "type": "text",
+                  "description": "WAJIB. Nama lengkap."
+                },
+                {
+                  "key": "username",
+                  "value": "budi",
+                  "type": "text",
+                  "description": "WAJIB. Unik."
+                },
+                {
+                  "key": "email",
+                  "value": "budi@example.com",
+                  "type": "text",
+                  "description": "WAJIB. Email valid, unik."
+                },
+                {
+                  "key": "password",
+                  "value": "secret123",
+                  "type": "text",
+                  "description": "WAJIB. Min 6 karakter."
+                },
+                {
+                  "key": "phone",
+                  "value": "+6281234567890",
+                  "type": "text",
+                  "description": "WAJIB. Regex ^\\+?\\d{10,15}$."
+                },
+                {
+                  "key": "address",
+                  "value": "{\"street\":\"Jl. Merdeka No. 1\",\"district\":\"Menteng\",\"city\":\"Jakarta Pusat\",\"state\":\"DKI Jakarta\",\"zip\":\"10310\",\"fullAddress\":\"Jl. Merdeka No. 1, Menteng, Jakarta Pusat 10310\"}",
+                  "type": "text",
+                  "description": "OPSIONAL. JSON string. Jika diisi, SEMUA sub-field wajib: street, district, city, state, zip, fullAddress."
+                },
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": [],
+                  "description": "OPSIONAL. Gambar jpeg/png/webp/gif, maks 2MB."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registrasi user baru. Content-Type: multipart/form-data (karena avatar opsional berupa file). Bisa juga dikirim sebagai JSON biasa tanpa avatar."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Registration successful\",\n  \"data\": {\n    \"id\": \"68721d4a2f9b3c0012ab3522\",\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budi\",\n    \"email\": \"budi@example.com\",\n    \"avatar\": \"/files/avatars/3b1f7c9e-2d4a-4f6b-9c8d-1a2b3c4d5e6f.png\",\n    \"avatarUrl\": \"https://<r2-endpoint>/bucket/avatars/3b1f...?X-Amz-Expires=3600&X-Amz-Signature=...\",\n    \"role\": \"user\",\n    \"phone\": \"+6281234567890\",\n    \"address\": {\n      \"street\": \"Jl. Merdeka No. 1\",\n      \"district\": \"Menteng\",\n      \"city\": \"Jakarta Pusat\",\n      \"state\": \"DKI Jakarta\",\n      \"zip\": \"10310\",\n      \"fullAddress\": \"Jl. Merdeka No. 1, Menteng, Jakarta Pusat 10310\"\n    },\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error — field tidak valid / kurang",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [\n      { \"field\": \"email\", \"message\": \"email must be a valid email address\" },\n      { \"field\": \"password\", \"message\": \"password must be at least 6 characters\" },\n      { \"field\": \"phone\", \"message\": \"phone must be a valid phone number\" }\n    ]\n  }\n}"
+            },
+            {
+              "name": "409 Conflict — email/username sudah dipakai",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Email or username already in use\",\n  \"error\": {\n    \"code\": \"CONFLICT\",\n    \"details\": [ { \"field\": \"email\", \"message\": \"email already exists\" } ]\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — avatar terlalu besar / tipe salah",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Uploaded file for \\\"avatar\\\" is too large\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const token = pm.response.json().data.token;",
+                  "  pm.collectionVariables.set('token', token);",
+                  "  console.log('token tersimpan ke collection variable {{token}}');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"budi@example.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login dengan email ATAU username. Body menerima salah satu dari: `identifier`, `email`, atau `username` + `password` (wajib). Sukses: token JWT di `data.token` DAN cookie httpOnly `token` (7 hari). Script test otomatis menyimpan token ke `{{token}}`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": "token=eyJhbGciOiJIUzI1NiIs...; Max-Age=604800; Path=/; HttpOnly; SameSite=Lax"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzIxZDRhIn0.abc123\",\n    \"user\": {\n      \"id\": \"68721d4a2f9b3c0012ab3522\",\n      \"name\": \"Budi Santoso\",\n      \"username\": \"budi\",\n      \"email\": \"budi@example.com\",\n      \"avatar\": null,\n      \"avatarUrl\": null,\n      \"role\": \"user\",\n      \"phone\": \"+6281234567890\",\n      \"address\": null,\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    }\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — identifier/password kosong",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"identifier (email or username) and password are required\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "401 Unauthorized — kredensial salah",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid credentials\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Menghapus cookie `token`. Token Bearer yang sudah diterbitkan TETAP berlaku sampai kedaluwarsa (stateless JWT) — client wajib membuang tokennya sendiri."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/logout"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Logged out\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Me (current user)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Profil user yang sedang login. Wajib Bearer token / cookie."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Current user\",\n  \"data\": {\n    \"id\": \"68721d4a2f9b3c0012ab3522\",\n    \"name\": \"Budi Santoso\",\n    \"username\": \"budi\",\n    \"email\": \"budi@example.com\",\n    \"avatar\": \"/files/avatars/3b1f7c9e-2d4a-4f6b-9c8d-1a2b3c4d5e6f.png\",\n    \"avatarUrl\": \"https://<r2-endpoint>/bucket/avatars/3b1f...?X-Amz-Expires=3600&X-Amz-Signature=...\",\n    \"role\": \"user\",\n    \"phone\": \"+6281234567890\",\n    \"address\": null,\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized — token tidak ada / tidak valid / kedaluwarsa",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            },
+            {
+              "name": "404 Not Found — user sudah dihapus",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"User not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users (admin)",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?page=1&limit=10&search=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Opsional. Integer >= 1. Default 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Opsional. Integer 1-100. Default 10."
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Opsional. Cari di name/username/email/phone (case-insensitive).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "ADMIN ONLY. Daftar user (tanpa akun admin) dengan pagination + search."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users?page=1&limit=10"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Users retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721d4a2f9b3c0012ab3522\",\n      \"name\": \"Budi Santoso\",\n      \"username\": \"budi\",\n      \"email\": \"budi@example.com\",\n      \"avatar\": null,\n      \"avatarUrl\": null,\n      \"role\": \"user\",\n      \"phone\": \"+6281234567890\",\n      \"address\": null,\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    }\n  ],\n  \"meta\": { \"total\": 42, \"page\": 1, \"limit\": 10, \"totalPages\": 5, \"hasPrevPage\": false, \"hasNextPage\": true }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            },
+            {
+              "name": "403 Forbidden — bukan admin",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"You do not have access to this resource\",\n  \"error\": { \"code\": \"FORBIDDEN\" }\n}"
+            },
+            {
+              "name": "422 Validation Error — pagination tidak valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users?page=0&limit=999"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid pagination query\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [\n      { \"field\": \"page\", \"message\": \"Too small: expected number to be >=1\" },\n      { \"field\": \"limit\", \"message\": \"Too big: expected number to be <=100\" }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso Baru\",\n  \"phone\": \"+6289876543210\",\n  \"address\": {\n    \"street\": \"Jl. Sudirman No. 10\",\n    \"district\": \"Setiabudi\",\n    \"city\": \"Jakarta Selatan\",\n    \"state\": \"DKI Jakarta\",\n    \"zip\": \"12910\",\n    \"fullAddress\": \"Jl. Sudirman No. 10, Setiabudi, Jakarta Selatan 12910\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "description": "ObjectId user (24 hex)"
+                }
+              ]
+            },
+            "description": "ADMIN ONLY. PATCH parsial — semua field opsional: `name`, `username`, `email`, `password` (min 6), `phone`, `address` (object lengkap / null). `role` TIDAK bisa diubah lewat endpoint ini. Bisa juga multipart/form-data dengan field file `avatar` (jpeg/png/webp/gif maks 2MB) — avatar lama otomatis dihapus dari storage."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"User updated successfully\",\n  \"data\": {\n    \"id\": \"68721d4a2f9b3c0012ab3522\",\n    \"name\": \"Budi Santoso Baru\",\n    \"username\": \"budi\",\n    \"email\": \"budi@example.com\",\n    \"avatar\": null,\n    \"avatarUrl\": null,\n    \"role\": \"user\",\n    \"phone\": \"+6289876543210\",\n    \"address\": {\n      \"street\": \"Jl. Sudirman No. 10\",\n      \"district\": \"Setiabudi\",\n      \"city\": \"Jakarta Selatan\",\n      \"state\": \"DKI Jakarta\",\n      \"zip\": \"12910\",\n      \"fullAddress\": \"Jl. Sudirman No. 10, Setiabudi, Jakarta Selatan 12910\"\n    },\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — id bukan ObjectId valid",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/abc"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"The id provided is not valid\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"User not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "409 Conflict — email/username duplikat",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Duplicate value\",\n  \"error\": {\n    \"code\": \"CONFLICT\",\n    \"details\": [ { \"field\": \"username\", \"message\": \"username already exists\" } ]\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userId}}"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"password\", \"message\": \"password must be at least 6 characters\" } ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products?page=1&limit=10&search=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Opsional. Integer >= 1. Default 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Opsional. Integer 1-100. Default 10."
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Opsional. Cari di name/description/category/type (case-insensitive).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "PUBLIK. Daftar produk dengan pagination + search."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products?page=1&limit=10"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Products retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721a0c2f9b3c0012ab34cd\",\n      \"name\": \"Kaos Polos Hitam\",\n      \"type\": \"physical\",\n      \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n      \"regularPrice\": 150000,\n      \"salePrice\": 120000,\n      \"weight\": 0.3,\n      \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n      \"stock\": 25,\n      \"category\": \"fashion\",\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    }\n  ],\n  \"meta\": { \"total\": 120, \"page\": 1, \"limit\": 10, \"totalPages\": 12, \"hasPrevPage\": false, \"hasNextPage\": true }\n}"
+            },
+            {
+              "name": "422 Validation Error — pagination tidak valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products?limit=0"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid pagination query\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"limit\", \"message\": \"Too small: expected number to be >=1\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get product by id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "PUBLIK. Detail satu produk."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Product retrieved\",\n  \"data\": {\n    \"id\": \"68721a0c2f9b3c0012ab34cd\",\n    \"name\": \"Kaos Polos Hitam\",\n    \"type\": \"physical\",\n    \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n    \"regularPrice\": 150000,\n    \"salePrice\": 120000,\n    \"weight\": 0.3,\n    \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n    \"stock\": 25,\n    \"category\": \"fashion\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — id bukan ObjectId valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/abc"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"The id provided is not valid\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kaos Polos Hitam\",\n  \"type\": \"physical\",\n  \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n  \"regularPrice\": 150000,\n  \"salePrice\": 120000,\n  \"weight\": 0.3,\n  \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n  \"stock\": 25,\n  \"category\": \"fashion\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products"
+              ]
+            },
+            "description": "ADMIN ONLY. Field:\n- `name` (string, wajib)\n- `type` (wajib: `digital` | `physical`)\n- `description` (string, wajib)\n- `regularPrice` (number >= 0, wajib)\n- `salePrice` (number >= 0, opsional, harus <= regularPrice)\n- `weight` (number >= 0, wajib)\n- `dimensions` (opsional: { length, width, height } masing-masing >= 0)\n- `stock` (integer >= 0, wajib)\n- `category` (string, wajib — HARUS nama category yang sudah terdaftar di /api/v1/categories, jika tidak -> 422)"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Product created\",\n  \"data\": {\n    \"id\": \"68721a0c2f9b3c0012ab34cd\",\n    \"name\": \"Kaos Polos Hitam\",\n    \"type\": \"physical\",\n    \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n    \"regularPrice\": 150000,\n    \"salePrice\": 120000,\n    \"weight\": 0.3,\n    \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n    \"stock\": 25,\n    \"category\": \"fashion\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            },
+            {
+              "name": "403 Forbidden — bukan admin",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"You do not have access to this resource\",\n  \"error\": { \"code\": \"FORBIDDEN\" }\n}"
+            },
+            {
+              "name": "422 Validation Error — termasuk salePrice > regularPrice",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [\n      { \"field\": \"type\", \"message\": \"type must be digital or physical\" },\n      { \"field\": \"salePrice\", \"message\": \"sale price must be less than or equal to regular price\" }\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error — category belum terdaftar",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"category\", \"message\": \"Category \\\"elektronik\\\" does not exist\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salePrice\": 99000,\n  \"stock\": 40\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "ADMIN ONLY. PATCH parsial — semua field opsional (skema sama dengan create). `salePrice` dan `dimensions` bisa di-set `null` untuk menghapus nilainya."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Product updated\",\n  \"data\": {\n    \"id\": \"68721a0c2f9b3c0012ab34cd\",\n    \"name\": \"Kaos Polos Hitam\",\n    \"type\": \"physical\",\n    \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n    \"regularPrice\": 150000,\n    \"salePrice\": 99000,\n    \"weight\": 0.3,\n    \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n    \"stock\": 40,\n    \"category\": \"fashion\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"stock\", \"message\": \"stock must be an integer\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "description": "ADMIN ONLY. Menghapus produk."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Product deleted\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{productId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories?page=1&limit=10&search=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Opsional. Integer >= 1. Default 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Opsional. Integer 1-100. Default 10."
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Opsional. Cari di name/description (case-insensitive).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "PUBLIK. Daftar category, terurut alfabetis berdasarkan name. Nilai `name` di sini yang dipakai sebagai field `category` saat create/update product."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories?page=1&limit=10"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Categories retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721f0a2f9b3c0012ab3544\",\n      \"name\": \"fashion\",\n      \"description\": \"Pakaian dan aksesoris\",\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    },\n    {\n      \"id\": \"68721f0a2f9b3c0012ab3545\",\n      \"name\": \"gadget\",\n      \"description\": null,\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    }\n  ],\n  \"meta\": { \"total\": 8, \"page\": 1, \"limit\": 10, \"totalPages\": 1, \"hasPrevPage\": false, \"hasNextPage\": false }\n}"
+            },
+            {
+              "name": "422 Validation Error — pagination tidak valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories?page=0"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid pagination query\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"page\", \"message\": \"Too small: expected number to be >=1\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get category by id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "68721f0a2f9b3c0012ab3544"
+              ]
+            },
+            "description": "PUBLIK. Detail satu category."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Category retrieved\",\n  \"data\": {\n    \"id\": \"68721f0a2f9b3c0012ab3544\",\n    \"name\": \"fashion\",\n    \"description\": \"Pakaian dan aksesoris\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — id bukan ObjectId valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/abc"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"The id provided is not valid\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Category not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"fashion\",\n  \"description\": \"Pakaian dan aksesoris\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            },
+            "description": "ADMIN ONLY. Field:\n- `name` (string, wajib, unik)\n- `description` (string, opsional, maks 500 karakter)"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Category created\",\n  \"data\": {\n    \"id\": \"68721f0a2f9b3c0012ab3544\",\n    \"name\": \"fashion\",\n    \"description\": \"Pakaian dan aksesoris\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict — nama sudah dipakai",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Category with this name already exists\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"name\", \"message\": \"name is required\" } ]\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            },
+            {
+              "name": "403 Forbidden — bukan admin",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"You do not have access to this resource\",\n  \"error\": { \"code\": \"FORBIDDEN\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Pakaian, sepatu, dan aksesoris\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "68721f0a2f9b3c0012ab3544"
+              ]
+            },
+            "description": "ADMIN ONLY. PATCH parsial — `name` (opsional, unik) dan `description` (opsional, maks 500, bisa null untuk menghapus). CATATAN: mengganti `name` TIDAK mengubah string `category` pada produk yang sudah ada."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Category updated\",\n  \"data\": {\n    \"id\": \"68721f0a2f9b3c0012ab3544\",\n    \"name\": \"fashion\",\n    \"description\": \"Pakaian, sepatu, dan aksesoris\",\n    \"createdAt\": \"11/07/2026\",\n    \"updatedAt\": \"11/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Category not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "409 Conflict — nama baru sudah dipakai category lain",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Category with this name already exists\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"description\", \"message\": \"description must be at most 500 characters\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete category",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "categories",
+                "68721f0a2f9b3c0012ab3544"
+              ]
+            },
+            "description": "ADMIN ONLY. Menghapus category. CATATAN: produk yang sudah memakai nama category ini TIDAK ikut berubah/terhapus."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Category deleted\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/categories/68721f0a2f9b3c0012ab3544"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Category not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wishlists",
+      "item": [
+        {
+          "name": "List wishlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlists?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wishlists"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Opsional. Integer >= 1. Default 1. Diabaikan jika all=true."
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Opsional. Integer 1-100. Default 10. Diabaikan jika all=true."
+                },
+                {
+                  "key": "all",
+                  "value": "true",
+                  "description": "Opsional. `true`/`1`/`yes` = kembalikan SEMUA item tanpa pagination (untuk dropdown/count).",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Wishlist milik user yang login. `product` berisi produk lengkap (null jika produknya sudah dihapus)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists?page=1&limit=10"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Wishlist retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721e5b2f9b3c0012ab3533\",\n      \"note\": \"buat kado ulang tahun\",\n      \"product\": {\n        \"id\": \"68721a0c2f9b3c0012ab34cd\",\n        \"name\": \"Kaos Polos Hitam\",\n        \"type\": \"physical\",\n        \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n        \"regularPrice\": 150000,\n        \"salePrice\": 120000,\n        \"weight\": 0.3,\n        \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n        \"stock\": 25,\n        \"category\": \"fashion\",\n        \"createdAt\": \"11/07/2026\",\n        \"updatedAt\": \"11/07/2026\"\n      },\n      \"createdAt\": \"2026-07-11T09:00:00.000Z\"\n    }\n  ],\n  \"meta\": { \"total\": 3, \"page\": 1, \"limit\": 10, \"totalPages\": 1, \"hasPrevPage\": false, \"hasNextPage\": false }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add to wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"note\": \"buat kado ulang tahun\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wishlists"
+              ]
+            },
+            "description": "Field:\n- `productId` (wajib, ObjectId 24 hex)\n- `note` (opsional, maks 500 karakter)"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Added to wishlist\",\n  \"data\": {\n    \"id\": \"68721e5b2f9b3c0012ab3533\",\n    \"note\": \"buat kado ulang tahun\",\n    \"product\": {\n      \"id\": \"68721a0c2f9b3c0012ab34cd\",\n      \"name\": \"Kaos Polos Hitam\",\n      \"type\": \"physical\",\n      \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n      \"regularPrice\": 150000,\n      \"salePrice\": 120000,\n      \"weight\": 0.3,\n      \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n      \"stock\": 25,\n      \"category\": \"fashion\",\n      \"createdAt\": \"11/07/2026\",\n      \"updatedAt\": \"11/07/2026\"\n    },\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — produk tidak ada",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "409 Conflict — sudah ada di wishlist",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product already in wishlist\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"productId\", \"message\": \"productId must be a valid id\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Check wishlisted",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlists/check/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wishlists",
+                "check",
+                "{{productId}}"
+              ]
+            },
+            "description": "Cek apakah sebuah produk ada di wishlist user yang login."
+          },
+          "response": [
+            {
+              "name": "200 OK — ada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists/check/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Wishlist status\",\n  \"data\": { \"wishlisted\": true }\n}"
+            },
+            {
+              "name": "200 OK — tidak ada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists/check/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Wishlist status\",\n  \"data\": { \"wishlisted\": false }\n}"
+            },
+            {
+              "name": "400 Bad Request — id bukan ObjectId valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists/check/abc"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"The productId provided is not valid\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Remove from wishlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wishlists/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "wishlists",
+                "{{productId}}"
+              ]
+            },
+            "description": "Menghapus produk dari wishlist user yang login. Param path = productId (bukan id item wishlist)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists/{{productId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Removed from wishlist\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 Not Found — item tidak ada di wishlist",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/wishlists/{{productId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Wishlist item not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Get cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cart"
+              ]
+            },
+            "description": "Keranjang milik user yang login. Dibuat otomatis (kosong) jika belum ada. `items[].product` berisi produk lengkap (null jika produknya sudah dihapus). `total` = jumlah `total` dari semua item berstatus `active`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cart retrieved\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [\n      {\n        \"id\": \"6874aa112f9b3c0012ab3601\",\n        \"product\": {\n        \"id\": \"68721a0c2f9b3c0012ab34cd\",\n        \"name\": \"Kaos Polos Hitam\",\n        \"type\": \"physical\",\n        \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n        \"regularPrice\": 150000,\n        \"salePrice\": 120000,\n        \"weight\": 0.3,\n        \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n        \"stock\": 25,\n        \"category\": \"Fashion Pria\",\n        \"createdAt\": \"11/07/2026\",\n        \"updatedAt\": \"11/07/2026\"\n      },\n        \"quantity\": 2,\n        \"status\": \"active\",\n        \"total\": 240000,\n        \"createdAt\": \"14/07/2026\",\n        \"updatedAt\": \"14/07/2026\"\n      }\n    ],\n    \"total\": 240000,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "200 OK — keranjang kosong",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cart retrieved\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [],\n    \"total\": 0,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add to cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cart"
+              ]
+            },
+            "description": "Menambahkan produk ke keranjang.\n\nField:\n- `productId` (wajib, ObjectId 24 hex)\n- `quantity` (wajib, integer >= 1)\n\nJika produk sudah ada di keranjang (status `active`), `quantity` akan diakumulasikan. Total quantity tidak boleh melebihi stok produk."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Added to cart\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [\n      {\n        \"id\": \"6874aa112f9b3c0012ab3601\",\n        \"product\": {\n        \"id\": \"68721a0c2f9b3c0012ab34cd\",\n        \"name\": \"Kaos Polos Hitam\",\n        \"type\": \"physical\",\n        \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n        \"regularPrice\": 150000,\n        \"salePrice\": 120000,\n        \"weight\": 0.3,\n        \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n        \"stock\": 25,\n        \"category\": \"Fashion Pria\",\n        \"createdAt\": \"11/07/2026\",\n        \"updatedAt\": \"11/07/2026\"\n      },\n        \"quantity\": 2,\n        \"status\": \"active\",\n        \"total\": 240000,\n        \"createdAt\": \"14/07/2026\",\n        \"updatedAt\": \"14/07/2026\"\n      }\n    ],\n    \"total\": 240000,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — produk tidak ada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Product not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "409 Conflict — melebihi stok",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Only 25 unit(s) of this product are in stock\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"quantity\", \"message\": \"quantity must be at least 1\" } ]\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update cart item quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cart",
+                "{{productId}}"
+              ]
+            },
+            "description": "Mengatur ulang quantity satu item di keranjang (param path = productId, bukan id item). Menimpa quantity yang lama. Tidak boleh melebihi stok produk.\n\nField:\n- `quantity` (wajib, integer >= 1)"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cart item updated\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [\n      {\n        \"id\": \"6874aa112f9b3c0012ab3601\",\n        \"product\": {\n        \"id\": \"68721a0c2f9b3c0012ab34cd\",\n        \"name\": \"Kaos Polos Hitam\",\n        \"type\": \"physical\",\n        \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n        \"regularPrice\": 150000,\n        \"salePrice\": 120000,\n        \"weight\": 0.3,\n        \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n        \"stock\": 25,\n        \"category\": \"Fashion Pria\",\n        \"createdAt\": \"11/07/2026\",\n        \"updatedAt\": \"11/07/2026\"\n      },\n        \"quantity\": 3,\n        \"status\": \"active\",\n        \"total\": 360000,\n        \"createdAt\": \"14/07/2026\",\n        \"updatedAt\": \"14/07/2026\"\n      }\n    ],\n    \"total\": 360000,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — item tidak ada di keranjang",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cart item not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "409 Conflict — melebihi stok",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Only 25 unit(s) of this product are in stock\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Remove from cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cart",
+                "{{productId}}"
+              ]
+            },
+            "description": "Menghapus satu item dari keranjang user yang login. Param path = productId (bukan id item keranjang). Mengembalikan keranjang terbaru."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Removed from cart\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [],\n    \"total\": 0,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — item tidak ada di keranjang",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cart item not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cart"
+              ]
+            },
+            "description": "Mengosongkan seluruh isi keranjang user yang login."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Cart cleared\",\n  \"data\": {\n    \"id\": \"6874aa112f9b3c0012ab3600\",\n    \"items\": [],\n    \"total\": 0,\n    \"createdAt\": \"14/07/2026\",\n    \"updatedAt\": \"14/07/2026\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cart"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "List orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders?page=1&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Opsional. Integer >= 1. Default 1."
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Opsional. Integer 1-100. Default 10."
+                }
+              ]
+            },
+            "description": "Role `user`: hanya order miliknya. Role `admin`: semua order. Terurut terbaru dulu."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders?page=1&limit=10"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Orders retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721b7e2f9b3c0012ab34ff\",\n      \"userId\": \"68721d4a2f9b3c0012ab3522\",\n      \"quantity\": 2,\n      \"price\": 120000,\n      \"total\": 240000,\n      \"status\": \"pending\",\n      \"product\": {\n        \"id\": \"68721a0c2f9b3c0012ab34cd\",\n        \"name\": \"Kaos Polos Hitam\",\n        \"type\": \"physical\",\n        \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\",\n        \"regularPrice\": 150000,\n        \"salePrice\": 120000,\n        \"weight\": 0.3,\n        \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 },\n        \"stock\": 23,\n        \"category\": \"fashion\",\n        \"createdAt\": \"11/07/2026\",\n        \"updatedAt\": \"11/07/2026\"\n      },\n      \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n      \"updatedAt\": \"2026-07-11T09:00:00.000Z\"\n    }\n  ],\n  \"meta\": { \"total\": 5, \"page\": 1, \"limit\": 10, \"totalPages\": 1, \"hasPrevPage\": false, \"hasNextPage\": false }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orders\": [\n    { \"productId\": \"{{productId}}\", \"quantity\": 2 },\n    { \"productId\": \"68721a0c2f9b3c0012ab34ce\", \"quantity\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders"
+              ]
+            },
+            "description": "Membuat 1-50 order sekaligus (satu order per produk). Field per item:\n- `productId` (wajib, ObjectId 24 hex)\n- `quantity` (wajib, integer >= 1)\n\nHarga (`price`) diambil dari salePrice/regularPrice saat order dibuat; stok dipotong atomik. Status awal: `pending`. Nilai status: `pending`, `processing`, `shipped`, `delivered`, `cancelled`."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Orders created\",\n  \"data\": [\n    {\n      \"id\": \"68721b7e2f9b3c0012ab34ff\",\n      \"userId\": \"68721d4a2f9b3c0012ab3522\",\n      \"quantity\": 2,\n      \"price\": 120000,\n      \"total\": 240000,\n      \"status\": \"pending\",\n      \"product\": { \"id\": \"68721a0c2f9b3c0012ab34cd\", \"name\": \"Kaos Polos Hitam\", \"type\": \"physical\", \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\", \"regularPrice\": 150000, \"salePrice\": 120000, \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 }, \"stock\": 23, \"category\": \"fashion\", \"createdAt\": \"11/07/2026\", \"updatedAt\": \"11/07/2026\" },\n      \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n      \"updatedAt\": \"2026-07-11T09:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "400 Bad Request — stok kurang / produk tidak ada",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Some orders could not be placed\",\n  \"error\": {\n    \"code\": \"BAD_REQUEST\",\n    \"details\": [\n      { \"field\": \"productId\", \"message\": \"Product 68721a0c2f9b3c0012ab34ce not found\" },\n      { \"field\": \"productId\", \"message\": \"Insufficient stock for \\\"Kaos Polos Hitam\\\" (available: 1, requested: 2)\" }\n    ]\n  }\n}"
+            },
+            {
+              "name": "409 Conflict — stok berubah saat order diproses (race)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Stock changed while placing the order, please try again\",\n  \"error\": { \"code\": \"CONFLICT\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [\n      { \"field\": \"orders\", \"message\": \"at least one order is required\" },\n      { \"field\": \"orders.0.quantity\", \"message\": \"quantity must be at least 1\" }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": "Detail order. User hanya boleh melihat order miliknya; admin boleh semua."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Order retrieved\",\n  \"data\": {\n    \"id\": \"68721b7e2f9b3c0012ab34ff\",\n    \"userId\": \"68721d4a2f9b3c0012ab3522\",\n    \"quantity\": 2,\n    \"price\": 120000,\n    \"total\": 240000,\n    \"status\": \"pending\",\n    \"product\": { \"id\": \"68721a0c2f9b3c0012ab34cd\", \"name\": \"Kaos Polos Hitam\", \"type\": \"physical\", \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\", \"regularPrice\": 150000, \"salePrice\": 120000, \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 }, \"stock\": 23, \"category\": \"fashion\", \"createdAt\": \"11/07/2026\", \"updatedAt\": \"11/07/2026\" },\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n    \"updatedAt\": \"2026-07-11T09:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "403 Forbidden — bukan order miliknya",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"This is not your order\",\n  \"error\": { \"code\": \"FORBIDDEN\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Order not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "400 Bad Request — id bukan ObjectId valid",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/abc"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"The id provided is not valid\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancel order (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
+            },
+            "description": "ADMIN ONLY. Hanya dari status `pending`/`processing`. Stok produk dikembalikan. Tanpa body."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Order cancelled\",\n  \"data\": {\n    \"id\": \"68721b7e2f9b3c0012ab34ff\",\n    \"userId\": \"68721d4a2f9b3c0012ab3522\",\n    \"quantity\": 2,\n    \"price\": 120000,\n    \"total\": 240000,\n    \"status\": \"cancelled\",\n    \"product\": { \"id\": \"68721a0c2f9b3c0012ab34cd\", \"name\": \"Kaos Polos Hitam\", \"type\": \"physical\", \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\", \"regularPrice\": 150000, \"salePrice\": 120000, \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 }, \"stock\": 25, \"category\": \"fashion\", \"createdAt\": \"11/07/2026\", \"updatedAt\": \"11/07/2026\" },\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n    \"updatedAt\": \"2026-07-11T09:30:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — status tidak bisa dibatalkan",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Cannot cancel an order with status \\\"delivered\\\"\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "403 Forbidden — bukan admin",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"You do not have access to this resource\",\n  \"error\": { \"code\": \"FORBIDDEN\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/cancel"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Order not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update order status (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"processing\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "description": "ADMIN ONLY. `status` wajib, salah satu dari: `pending`, `processing`, `shipped`, `delivered`. Nilai `cancelled` DITOLAK (400) — gunakan endpoint cancel."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Order status updated\",\n  \"data\": {\n    \"id\": \"68721b7e2f9b3c0012ab34ff\",\n    \"userId\": \"68721d4a2f9b3c0012ab3522\",\n    \"quantity\": 2,\n    \"price\": 120000,\n    \"total\": 240000,\n    \"status\": \"processing\",\n    \"product\": { \"id\": \"68721a0c2f9b3c0012ab34cd\", \"name\": \"Kaos Polos Hitam\", \"type\": \"physical\", \"description\": \"Kaos katun combed 30s, nyaman dipakai harian.\", \"regularPrice\": 150000, \"salePrice\": 120000, \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 }, \"stock\": 23, \"category\": \"fashion\", \"createdAt\": \"11/07/2026\", \"updatedAt\": \"11/07/2026\" },\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n    \"updatedAt\": \"2026-07-11T10:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request — status cancelled ditolak",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Use the cancel endpoint to cancel an order\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "422 Validation Error — status di luar enum",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"status\", \"message\": \"Invalid option: expected one of \\\"pending\\\"|\\\"processing\\\"|\\\"shipped\\\"|\\\"delivered\\\"|\\\"cancelled\\\"\" } ]\n  }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}/status"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Order not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete order (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "description": "ADMIN ONLY. Hanya order berstatus `cancelled` yang bisa dihapus."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Order deleted\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "400 Bad Request — status bukan cancelled",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Only cancelled orders can be deleted (current status: \\\"pending\\\")\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/orders/{{orderId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Order not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AI Chat (sessions)",
+      "item": [
+        {
+          "name": "List sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions"
+              ]
+            },
+            "description": "Semua sesi chat milik user yang login, terurut paling baru diupdate. Tanpa pagination."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Sessions retrieved\",\n  \"data\": [\n    {\n      \"id\": \"68721c992f9b3c0012ab3511\",\n      \"title\": \"cariin kaos hitam dong\",\n      \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n      \"updatedAt\": \"2026-07-11T09:05:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Authentication token missing\",\n  \"error\": { \"code\": \"UNAUTHORIZED\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Rekomendasi kado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions"
+              ]
+            },
+            "description": "Membuat sesi chat baru. `title` opsional (1-120 karakter); default `\"New chat\"` dan otomatis diganti dengan 60 karakter pertama pesan pertama."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Session created\",\n  \"data\": {\n    \"id\": \"68721c992f9b3c0012ab3511\",\n    \"title\": \"Rekomendasi kado\",\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n    \"updatedAt\": \"2026-07-11T09:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "422 Validation Error — title kosong / terlalu panjang",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"title\", \"message\": \"Too big: expected string to have <=120 characters\" } ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get session + messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Detail sesi + SEMUA pesannya (terurut lama ke baru). `role`: `user` | `model`. `attachments` berisi data terstruktur (mis. tabel perbandingan produk) atau null."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Session retrieved\",\n  \"data\": {\n    \"id\": \"68721c992f9b3c0012ab3511\",\n    \"title\": \"cariin kaos hitam dong\",\n    \"createdAt\": \"2026-07-11T09:00:00.000Z\",\n    \"updatedAt\": \"2026-07-11T09:05:00.000Z\",\n    \"messages\": [\n      {\n        \"id\": \"68721ca12f9b3c0012ab3512\",\n        \"role\": \"user\",\n        \"content\": \"cariin kaos hitam dong\",\n        \"attachments\": null,\n        \"createdAt\": \"2026-07-11T09:00:10.000Z\"\n      },\n      {\n        \"id\": \"68721ca52f9b3c0012ab3513\",\n        \"role\": \"model\",\n        \"content\": \"Aku nemu Kaos Polos Hitam seharga Rp120.000 (diskon dari Rp150.000), stok 25. Mau kutambahkan ke wishlist?\",\n        \"attachments\": null,\n        \"createdAt\": \"2026-07-11T09:00:15.000Z\"\n      }\n    ]\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — sesi tidak ada / bukan milik user",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Chat session not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete session",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Menghapus sesi beserta semua pesannya."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Session deleted\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Chat session not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Send message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"bandingkan kaos polos hitam dengan kaos polos putih\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "messages"
+              ]
+            },
+            "description": "Kirim pesan ke asisten SpreeBuddy (non-streaming). `message` wajib, 1-4000 karakter. Asisten bisa memanggil tool internal (search produk, wishlist, perbandingan). Jika membandingkan produk, `attachments` berisi objek `type: \"comparison\"` untuk dirender FE sebagai tabel. Respons bisa lambat (beberapa detik) karena menunggu AI selesai."
+          },
+          "response": [
+            {
+              "name": "200 OK — balasan biasa",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Reply generated\",\n  \"data\": {\n    \"reply\": \"Aku nemu Kaos Polos Hitam seharga Rp120.000 (diskon dari Rp150.000), stok 25. Mau kutambahkan ke wishlist?\",\n    \"attachments\": null\n  }\n}"
+            },
+            {
+              "name": "200 OK — dengan attachment perbandingan",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Reply generated\",\n  \"data\": {\n    \"reply\": \"Keduanya sama nyaman, tapi yang hitam sedang diskon jadi lebih hemat Rp30.000. Kalau prioritasmu value-for-money, ambil yang hitam; stok keduanya masih aman.\",\n    \"attachments\": {\n      \"type\": \"comparison\",\n      \"fields\": [\n        { \"key\": \"regularPrice\", \"label\": \"Regular Price\" },\n        { \"key\": \"salePrice\", \"label\": \"Sale Price\" },\n        { \"key\": \"effectivePrice\", \"label\": \"Effective Price\" },\n        { \"key\": \"stock\", \"label\": \"Stock\" },\n        { \"key\": \"category\", \"label\": \"Category\" },\n        { \"key\": \"type\", \"label\": \"Type\" },\n        { \"key\": \"weight\", \"label\": \"Weight\" },\n        { \"key\": \"dimensions\", \"label\": \"Dimensions\" }\n      ],\n      \"products\": [\n        { \"id\": \"68721a0c2f9b3c0012ab34cd\", \"name\": \"Kaos Polos Hitam\", \"regularPrice\": 150000, \"salePrice\": 120000, \"effectivePrice\": 120000, \"stock\": 25, \"category\": \"fashion\", \"type\": \"physical\", \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 } },\n        { \"id\": \"68721a0c2f9b3c0012ab34ce\", \"name\": \"Kaos Polos Putih\", \"regularPrice\": 150000, \"salePrice\": null, \"effectivePrice\": 150000, \"stock\": 18, \"category\": \"fashion\", \"type\": \"physical\", \"weight\": 0.3, \"dimensions\": { \"length\": 30, \"width\": 20, \"height\": 2 } }\n      ]\n    }\n  }\n}"
+            },
+            {
+              "name": "404 Not Found — sesi tidak ada / bukan milik user",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Chat session not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "422 Validation Error — message kosong / > 4000 karakter",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"message\", \"message\": \"message is required\" } ]\n  }\n}"
+            },
+            {
+              "name": "500 Internal — kuota AI habis / layanan sibuk / belum dikonfigurasi",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/messages"
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"AI quota or rate limit reached. Please try again later.\",\n  \"error\": { \"code\": \"INTERNAL_SERVER_ERROR\" }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Stream message (SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "text/event-stream"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"bandingkan kaos polos hitam dengan kaos polos putih\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/stream",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{sessionId}}",
+                "stream"
+              ]
+            },
+            "description": "Varian streaming (Server-Sent Events). Body sama dengan Send message. Response: `Content-Type: text/event-stream` berisi urutan event:\n- `event: chunk` — `{ \"text\": \"potongan teks\" }` (berkali-kali)\n- `event: attachment` — objek comparison (hanya jika ada)\n- `event: done` — `{ \"attachments\": ... }` penanda selesai\n- `event: error` — `{ \"message\": \"...\" }` jika gagal di tengah stream\n\nError kepemilikan sesi dicek SEBELUM stream dimulai, jadi sesi tak valid tetap mengembalikan 404 JSON biasa. CATATAN: Postman menampilkan SSE sebagai teks mentah."
+          },
+          "response": [
+            {
+              "name": "200 OK — stream SSE",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/stream"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/event-stream"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                }
+              ],
+              "body": "event: chunk\ndata: {\"text\":\"Keduanya sama nyaman, \"}\n\nevent: chunk\ndata: {\"text\":\"tapi yang hitam sedang diskon...\"}\n\nevent: attachment\ndata: {\"type\":\"comparison\",\"fields\":[{\"key\":\"regularPrice\",\"label\":\"Regular Price\"}],\"products\":[{\"id\":\"68721a0c2f9b3c0012ab34cd\",\"name\":\"Kaos Polos Hitam\",\"effectivePrice\":120000}]}\n\nevent: done\ndata: {\"attachments\":{\"type\":\"comparison\"}}\n"
+            },
+            {
+              "name": "200 OK — stream dengan event error di tengah",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/stream"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/event-stream"
+                }
+              ],
+              "body": "event: chunk\ndata: {\"text\":\"Sebentar, aku carikan\"}\n\nevent: error\ndata: {\"message\":\"AI service is busy, please try again in a moment.\"}\n"
+            },
+            {
+              "name": "404 Not Found — sesi tidak valid (sebelum stream)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/stream"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Chat session not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            },
+            {
+              "name": "422 Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/sessions/{{sessionId}}/stream"
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed\",\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"details\": [ { \"field\": \"message\", \"message\": \"message is too long\" } ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "item": [
+        {
+          "name": "Serve file",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/files/avatars/3b1f7c9e-2d4a-4f6b-9c8d-1a2b3c4d5e6f.png",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "files",
+                "avatars",
+                "3b1f7c9e-2d4a-4f6b-9c8d-1a2b3c4d5e6f.png"
+              ]
+            },
+            "description": "PUBLIK (tanpa auth, di luar /api/v1). Streaming file dari storage privat (R2) — dipakai untuk avatar. Path: `/files/:category/:filename` — persis nilai field `avatar` pada objek user. Sukses mengembalikan binary dengan Content-Type asli file dan `Cache-Control: public, max-age=86400`. Alternatif: pakai `avatarUrl` (presigned URL, berlaku 1 jam) langsung ke storage."
+          },
+          "response": [
+            {
+              "name": "200 OK — binary image",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/files/avatars/3b1f7c9e-2d4a-4f6b-9c8d-1a2b3c4d5e6f.png"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "text",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "image/png"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48213"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "public, max-age=86400"
+                }
+              ],
+              "body": "(binary image data)"
+            },
+            {
+              "name": "400 Bad Request — path traversal terdeteksi",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/files/..%2Fsecrets/x.png"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid file path\",\n  \"error\": { \"code\": \"BAD_REQUEST\" }\n}"
+            },
+            {
+              "name": "404 Not Found — objek tidak ada di storage",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/files/avatars/tidak-ada.png"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"message\": \"File not found\",\n  \"error\": { \"code\": \"NOT_FOUND\" }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

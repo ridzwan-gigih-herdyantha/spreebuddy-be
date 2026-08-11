@@ -8,6 +8,8 @@ import categoryRoutes from '../modules/categories/category.route.js';
 import wishlistRoutes from '../modules/wishlists/wishlist.route.js';
 import orderRoutes from '../modules/orders/order.route.js';
 import aiRoutes from '../modules/AI/ai.route.js';
+import cartRoutes from '../modules/cart/cart.route.js';
+
 import rateLimit from 'express-rate-limit';
 // import MongoStore from 'rate-limit-mongo';
 // import { env } from '../config/env.js';
@@ -66,6 +68,7 @@ router.get('/', (_req, res) => {
         categories: 'GET /api/v1/categories',
         wishlist: 'GET /api/v1/wishlists',
         orders: 'GET /api/v1/orders',
+        cart: 'GET /api/v1/cart',
       },
     },
     'API v1',
@@ -80,6 +83,7 @@ router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
+router.use('/carts', cartRoutes);
 router.use('/sessions', AiLimiter, aiRoutes);
 
 export default router;
