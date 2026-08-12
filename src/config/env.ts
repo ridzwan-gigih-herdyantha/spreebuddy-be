@@ -29,7 +29,9 @@ export const env = {
   // Google Gemini (AI chat assistant). Optional locally; required for the chat feature.
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL ?? 'gemini-2.0-flash',
+    // Evergreen alias — Google keeps it pointing at the current flash, so it
+    // won't get retired like pinned versions (e.g. gemini-2.0-flash → 404).
+    model: process.env.GEMINI_MODEL ?? 'gemini-flash-latest',
   },
 } as const;
 

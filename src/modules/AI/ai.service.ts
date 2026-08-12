@@ -1,4 +1,4 @@
-import { GoogleGenAI, Content } from '@google/genai';
+import { GoogleGenAI, Content, Part } from '@google/genai';
 import { env } from '../../config/env.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import ChatSession from './chatSession.model.js';
@@ -133,8 +133,9 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
 
     const functionCalls = response.functionCalls ?? [];
     if (functionCalls.length > 0) {
-      // Record the model's tool-call turn.
-      contents.push({ role: 'model', parts: functionCalls.map((c) => ({ functionCall: c })) });
+      // Record the model's tool-call turn verbatim (keeps thoughtSignatures).
+      const modelContent = response.candidates?.[0]?.content;
+      if (modelContent) contents.push(modelContent);
 
       // Execute each call and feed the results back to the model.
       const parts = [];
@@ -216,8 +217,14 @@ export async function* streamMessage(
 
     let stepText = '';
     const calls = [];
+    const modelParts: Part[] = []; // functionCall parts kept verbatim (with thoughtSignature)
     for await (const chunk of stream) {
-      if (chunk.functionCalls?.length) calls.push(...chunk.functionCalls);
+      for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+        if (part.functionCall) {
+          calls.push(part.functionCall);
+          modelParts.push(part);
+        }
+      }
       const delta = chunk.text ?? '';
       if (delta) {
         stepText += delta;
@@ -226,7 +233,7 @@ export async function* streamMessage(
     }
 
     if (calls.length > 0) {
-      contents.push({ role: 'model', parts: calls.map((c) => ({ functionCall: c })) });
+      contents.push({ role: 'model', parts: modelParts });
       const parts = [];
       for (const call of calls) {
         const result = await executeTool(call.name ?? '', call.args ?? {}, { userId });
