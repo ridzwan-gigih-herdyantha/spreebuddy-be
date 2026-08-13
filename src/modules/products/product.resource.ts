@@ -5,6 +5,7 @@ import {ProductDocument } from './product.model.js';
 export interface ProductResponse {
   id: string;
   name: string;
+  slug: string;
   type: string;
   description: string;
   regularPrice: number;
@@ -24,6 +25,7 @@ export interface ProductResponse {
 export const ProductResource = makeResource<ProductDocument, ProductResponse>((p) => ({
   id: p.id,
   name: p.name,
+  slug: p.slug,
   type: p.type,
   description: p.description,
   regularPrice: p.regularPrice,

@@ -20,9 +20,10 @@ export async function listProducts(req: Request, res: Response) {
     );
 }
 
+// Public product detail by slug.
 export async function getProduct(req: Request, res: Response) {
-    const id = String(req.params.id);
-    const product = await productService.getProductById(id);
+    const slug = String(req.params.slug);
+    const product = await productService.getProductBySlug(slug);
     return sendSuccess(res, ProductResource.item(product), 'Product retrieved');
 }
 

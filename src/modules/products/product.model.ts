@@ -7,6 +7,7 @@ export enum ProductType {
 
 export interface IProduct {
     name: string;
+    slug: string;
     type: ProductType;
     description: string;
     regularPrice: number;
@@ -27,11 +28,18 @@ export type ProductDocument = HydratedDocument<IProduct>;
 type ProductModel = Model<IProduct>;
 
 const productSchema = new Schema<IProduct, ProductModel>({
-    name: { 
-        type: String, 
-        required: true 
+    name: {
+        type: String,
+        required: true
     },
-    type: { 
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        index: true,
+    },
+    type: {
         type: String, 
         enum: Object.values(ProductType), 
         required: true 

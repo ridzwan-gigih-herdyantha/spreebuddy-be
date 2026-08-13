@@ -2,15 +2,18 @@ import Product from '../../modules/products/product.model.js';
 import { fakerID_ID as faker } from '@faker-js/faker';
 import { ProductType } from '../../modules/products/product.model.js';
 import { CATEGORY_NAMES } from './category.seeder.js';
+import { generateSlug } from '../../common/utils/slug.js';
 
 export default {
   name: 'product',
 
   async run() {
     await Product.deleteMany({});
+    await Product.syncIndexes(); // rebuild indexes (e.g. unique slug) on the clean collection
     console.log('[product] Cleared products collection');
 
     const products = Array.from({ length: 60 }, () => {
+      const name = faker.commerce.productName();
       const regularPrice = faker.number.float({
         min: 10,
         max: 1000,
@@ -20,7 +23,8 @@ export default {
       const hasSale = faker.datatype.boolean();
 
       return {
-        name: faker.commerce.productName(),
+        name,
+        slug: generateSlug(name),
         description: faker.commerce.productDescription(),
         type: faker.helpers.arrayElement(Object.values(ProductType)),
         regularPrice,

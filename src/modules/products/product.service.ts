@@ -2,6 +2,7 @@ import { QueryFilter } from 'mongoose';
 import { ApiError } from '../../common/errors/ApiError.js';
 import Product, { IProduct, ProductDocument } from './product.model.js';
 import { escapeRegExp } from '../../common/utils/escapeRegex.js';
+import { generateSlug } from '../../common/utils/slug.js';
 import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 import { assertCategoryExists } from '../categories/category.service.js';
 
@@ -34,9 +35,15 @@ export async function getProductById(id: string) {
     return product;
 }
 
+export async function getProductBySlug(slug: string) {
+    const product = await Product.findOne({ slug });
+    if (!product) throw ApiError.notFound('Product not found');
+    return product;
+}
+
 export async function createProduct(input: CreateProductBody) {
     await assertCategoryExists(input.category);
-    return Product.create(input);
+    return Product.create({ ...input, slug: generateSlug(input.name) });
 }
 
 export async function updateProduct(id: string, update: UpdateProductBody) {
@@ -46,6 +53,8 @@ export async function updateProduct(id: string, update: UpdateProductBody) {
     if (update.category !== undefined) await assertCategoryExists(update.category);
 
     Object.assign(product, update);
+    // Regenerate the slug on edit (new timestamp + random suffix).
+    product.slug = generateSlug(product.name);
     await product.save();
     return product;
 }
