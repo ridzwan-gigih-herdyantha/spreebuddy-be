@@ -11,14 +11,14 @@ export function createOrders(userId: string, items: OrderItemInput[]) {
 export async function listOrders(isAdmin: boolean, userId: string, skip: number, limit: number) {
   const filter = isAdmin ? {} : { userId };
   const [orders, total] = await Promise.all([
-    Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('productId'),
+    Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate(['productId', 'userId']),
     Order.countDocuments(filter),
   ]);
   return { orders, total };
 }
 
 export async function getOrder(id: string, isAdmin: boolean, userId: string) {
-  const order = await Order.findById(id).populate('productId');
+  const order = await Order.findById(id).populate(['productId', 'userId']);
   if (!order) throw ApiError.notFound('Order not found');
   if (!isAdmin && String(order.userId) !== userId) {
     throw ApiError.forbidden('This is not your order');
@@ -37,7 +37,7 @@ async function loadOrder(id: string) {
 export async function cancelOrder(id: string) {
   const order = await loadOrder(id);
   await lifecycle.transition(order, OrderStatus.CANCELLED);
-  return order.populate('productId');
+  return order.populate(['productId', 'userId']);
 }
 
 // Admin lifecycle updates; cancellation goes through the cancel endpoint.
@@ -47,7 +47,7 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   }
   const order = await loadOrder(id);
   await lifecycle.transition(order, status);
-  return order.populate('productId');
+  return order.populate(['productId', 'userId']);
 }
 
 // Delete: only cancelled orders; the ledger releases any held stock (none, since
