@@ -6,16 +6,34 @@ import { generateSlug } from '../../common/utils/slug.js';
 import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 import { assertCategoryExists } from '../categories/category.service.js';
 
-export async function listProducts({ skip, limit, search }: { skip: number; limit: number; search?: string }) {
+export async function listProducts({
+    skip,
+    limit,
+    search,
+    category,
+}: {
+    skip: number;
+    limit: number;
+    search?: string;
+    category?: string;
+}) {
     const filter: QueryFilter<IProduct> = {};
 
     if (search) {
         const regex = new RegExp(escapeRegExp(search), 'i');
-        filter.$or = [{ name: regex }, 
+        filter.$or = [{ name: regex },
             { description: regex },
             { category: regex },
             { type: regex }
         ];
+    }
+
+    // Filter by one or more categories (comma-separated), e.g. ?category=Fashion,Elektronik
+    const categories = category
+        ? category.split(',').map((c) => c.trim()).filter(Boolean)
+        : [];
+    if (categories.length) {
+        filter.category = { $in: categories };
     }
 
     const [products, total] = await Promise.all([

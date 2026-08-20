@@ -8,8 +8,14 @@ import { CreateProductBody, UpdateProductBody } from './product.schema.js';
 
 export async function listProducts(req: Request, res: Response) {
     const { page, limit, skip } = parsePagination(req.query);
-      const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
-    const { products, total } = await productService.listProducts({ skip, limit, search: search || undefined });
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+    const category = typeof req.query.category === 'string' ? req.query.category.trim() : undefined;
+    const { products, total } = await productService.listProducts({
+        skip,
+        limit,
+        search: search || undefined,
+        category: category || undefined,
+    });
 
     return sendSuccess(
         res,
