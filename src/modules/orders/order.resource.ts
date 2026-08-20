@@ -3,10 +3,12 @@ import { formatDateDMY } from '../../common/utils/formatDate.js';
 import { OrderDocument } from './order.model.js';
 import { ProductResource, ProductResponse } from '../products/product.resource.js';
 import { ProductDocument } from '../products/product.model.js';
+import { UserResource, UserResponse } from '../users/user.resource.js';
+import { UserDocument } from '../users/user.model.js';
 
 export interface OrderResponse {
   id: string;
-  userId: string;
+  user: UserResponse | null;
   quantity: number;
   price: number;
   total: number;
@@ -18,7 +20,7 @@ export interface OrderResponse {
 
 export const OrderResource = makeResource<OrderDocument, OrderResponse>((o) => ({
   id: o.id,
-  userId: String(o.userId),
+  user: o.populated('userId') ? UserResource.item(o.userId as unknown as UserDocument) : null,
   quantity: o.quantity,
   price: o.price,
   total: o.total,
