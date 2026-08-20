@@ -11,7 +11,7 @@ export function createOrders(userId: string, items: OrderItemInput[]) {
 export async function listOrders(isAdmin: boolean, userId: string, skip: number, limit: number) {
   const filter = isAdmin ? {} : { userId };
   const [orders, total] = await Promise.all([
-    Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate(['productId', 'userId']),
+    Order.find(filter).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(limit).populate(['productId', 'userId']),
     Order.countDocuments(filter),
   ]);
   return { orders, total };

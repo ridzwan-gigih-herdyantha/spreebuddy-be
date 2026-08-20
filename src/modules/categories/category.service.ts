@@ -13,7 +13,7 @@ export async function listCategories({ skip, limit, search }: { skip: number; li
     }
 
     const [categories, total] = await Promise.all([
-        Category.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+        Category.find(filter).sort({ name: 1, _id: 1 }).skip(skip).limit(limit),
         Category.countDocuments(filter),
     ]);
     return { categories, total };

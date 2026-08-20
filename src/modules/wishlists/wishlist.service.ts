@@ -6,7 +6,7 @@ export async function listWishlist(
   userId: string,
   { skip, limit, all = false }: { skip: number; limit: number; all?: boolean },
 ) {
-  const query = Wishlist.find({ userId }).sort({ createdAt: -1 }).populate('productId');
+  const query = Wishlist.find({ userId }).sort({ createdAt: -1, _id: -1 }).populate('productId');
   // `all` returns the full wishlist in one go (no pagination).
   if (!all) query.skip(skip).limit(limit);
 

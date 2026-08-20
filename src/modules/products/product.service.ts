@@ -37,7 +37,7 @@ export async function listProducts({
     }
 
     const [products, total] = await Promise.all([
-        Product.find(filter).sort({ createdAt: 1 }).skip(skip).limit(limit),
+        Product.find(filter).sort({ createdAt: 1, _id: 1 }).skip(skip).limit(limit),
         Product.countDocuments(filter),
     ]);
     return { products, total };
