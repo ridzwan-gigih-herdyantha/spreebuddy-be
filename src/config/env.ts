@@ -26,6 +26,11 @@ export const env = {
     bucket: process.env.CLOUDFLARE_R2_BUCKET,
     // publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL, // public bucket URL / custom domain
   },
+  openrouter: {
+    apiKey: process.env.OPENROUTER_API_KEY,
+    baseUrl: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
+    model: process.env.OPENROUTER_MODEL ?? 'openrouter/free',
+  },
 } as const;
 
 export const isProduction = env.nodeEnv === 'production';
