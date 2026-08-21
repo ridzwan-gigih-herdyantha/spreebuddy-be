@@ -52,7 +52,7 @@ router.get('/', (_req, res) => {
         wishlist: 'GET /api/v1/wishlists',
         orders: 'GET /api/v1/orders',
         cart: 'GET /api/v1/cart',
-        ai: 'POST /api/v1/ai/sessions/:id/messages',
+        ai: 'POST /api/v1/sessions/:id/messages',
       },
     },
     'API v1',
@@ -68,6 +68,6 @@ router.use('/categories', categoryRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
 router.use('/carts', cartRoutes);
-router.use('/ai', aiRoutes);
+router.use('/sessions', aiRoutes);
 
 export default router;

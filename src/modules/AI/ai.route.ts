@@ -15,11 +15,11 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/sessions', listSessionsHandler);
-router.post('/sessions', validateBody(createSessionSchema), createSessionHandler);
-router.get('/sessions/:id', getSessionHandler);
-router.delete('/sessions/:id', deleteSessionHandler);
-router.post('/sessions/:id/messages', validateBody(sendMessageSchema), sendMessageHandler);
-router.post('/sessions/:id/stream', validateBody(sendMessageSchema), streamMessageHandler);
+router.get('/', listSessionsHandler);
+router.post('/', validateBody(createSessionSchema), createSessionHandler);
+router.get('/:id', getSessionHandler);
+router.delete('/:id', deleteSessionHandler);
+router.post('/:id/messages', validateBody(sendMessageSchema), sendMessageHandler);
+router.post('/:id/stream', validateBody(sendMessageSchema), streamMessageHandler);
 
 export default router;
