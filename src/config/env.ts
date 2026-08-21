@@ -30,6 +30,8 @@ export const env = {
     apiKey: process.env.OPENROUTER_API_KEY,
     baseUrl: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
     model: process.env.OPENROUTER_MODEL ?? 'openrouter/free',
+    appName: process.env.OPENROUTER_APP_NAME ?? 'SpreeBuddy', // shown as "App" in OpenRouter
+    appUrl: process.env.OPENROUTER_APP_URL, // site URL for attribution/ranking (optional)
   },
 } as const;
 
