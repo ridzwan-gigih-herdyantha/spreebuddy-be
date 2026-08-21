@@ -40,6 +40,9 @@ STREAMING & FORMATTING (your reply is streamed to the user token-by-token — wr
 
 const HISTORY_LIMIT = 10;
 const MAX_TOOL_STEPS = 5;
+const FALLBACK_REPLY = 'Sorry, I could not generate a response right now. Please try again.';
+const CLOSING_PROMPT =
+  'Answer the user now, in plain text, using the tool results already gathered above. Do not call any tools.';
 
 let client: OpenAI | null = null;
 function getClient(): OpenAI {
@@ -109,13 +112,44 @@ export async function deleteSession(sessionId: string, userId: string) {
 }
 
 async function buildMessages(sessionId: string, text: string): Promise<Message[]> {
-  const past = await ChatMessage.find({ sessionId }).sort({ createdAt: -1, _id: -1 }).limit(HISTORY_LIMIT);
+  // Past fallbacks are excluded: feeding "I could not answer" back as context
+  // makes the model more likely to give up again.
+  const past = await ChatMessage.find({ sessionId, content: { $ne: FALLBACK_REPLY } })
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(HISTORY_LIMIT);
   past.reverse();
   return [
     { role: 'system', content: SYSTEM_PROMPT },
     ...past.map((m): Message => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.content })),
     { role: 'user', content: text },
   ];
+}
+
+// Reached when the tool budget ran out or a turn came back empty. The tool
+// results are already in `messages`, so ask once more with no tools attached.
+async function closingAnswer(
+  ai: OpenAI,
+  messages: Message[],
+  ctx: { steps: number; finishReason?: string },
+): Promise<string> {
+  console.warn(
+    `[ai] no reply after ${ctx.steps} step(s) (finish_reason=${ctx.finishReason ?? 'none'}), retrying without tools`,
+  );
+
+  try {
+    const res = await ai.chat.completions.create({
+      model: env.openrouter.model,
+      messages: [...messages, { role: 'user', content: CLOSING_PROMPT }],
+    });
+    const text = res.choices[0]?.message?.content ?? '';
+    if (!text.trim()) {
+      console.warn(`[ai] closing call produced nothing (finish_reason=${res.choices[0]?.finish_reason ?? 'none'})`);
+    }
+    return text;
+  } catch (err) {
+    console.warn('[ai] closing call failed:', err instanceof Error ? err.message : err);
+    return '';
+  }
 }
 
 async function persist(sessionId: string, userText: string, reply: string, attachments: unknown) {
@@ -133,10 +167,15 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
 
   let reply = '';
   let attachments: Record<string, unknown> | null = null;
+  let finishReason: string | undefined;
+  let steps = 0;
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
+    steps = step + 1;
     const res = await ai.chat.completions.create({ model: env.openrouter.model, messages, tools });
-    const msg = res.choices[0]?.message;
+    const choice = res.choices[0];
+    finishReason = choice?.finish_reason;
+    const msg = choice?.message;
     const toolCalls = msg?.tool_calls ?? [];
 
     if (toolCalls.length > 0) {
@@ -154,7 +193,9 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
     break;
   }
 
-  if (!reply) reply = 'Sorry, I could not generate a response right now. Please try again.';
+  if (!reply.trim()) reply = await closingAnswer(ai, messages, { steps, finishReason });
+  if (!reply.trim()) reply = FALLBACK_REPLY;
+
   await persist(sessionId, text, reply, attachments);
 
   if (needsTitle) {
@@ -178,13 +219,17 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
 
   let reply = '';
   let attachments: Record<string, unknown> | null = null;
+  let finishReason: string | undefined;
+  let steps = 0;
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
+    steps = step + 1;
     const stream = await ai.chat.completions.create({ model: env.openrouter.model, messages, tools, stream: true });
 
     let content = '';
     const acc: Record<number, { id: string; name: string; args: string }> = {};
     for await (const chunk of stream) {
+      finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
       const delta = chunk.choices[0]?.delta;
       if (delta?.content) {
         content += delta.content;
@@ -220,7 +265,16 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
     break;
   }
 
-  if (!reply) reply = 'Sorry, I could not generate a response right now. Please try again.';
+  if (!reply.trim()) {
+    // The stream produced nothing, so the recovered text is emitted in one go.
+    reply = await closingAnswer(ai, messages, { steps, finishReason });
+    if (reply.trim()) yield { type: 'chunk', text: reply };
+  }
+  if (!reply.trim()) {
+    reply = FALLBACK_REPLY;
+    yield { type: 'chunk', text: reply };
+  }
+
   await persist(sessionId, text, reply, attachments);
 
   if (needsTitle) {
