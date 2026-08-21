@@ -1,4 +1,4 @@
-import type OpenAI from 'openai';
+import type { OpenAI } from 'openai';
 import * as wishlistService from '../wishlists/wishlist.service.js';
 import * as productService from '../products/product.service.js';
 import Product, { ProductDocument } from '../products/product.model.js';
@@ -35,7 +35,7 @@ export function buildComparison(products: ProductDocument[]) {
   };
 }
 
-export const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+export const tools: OpenAI.ChatCompletionTool[] = [
   {
     type: 'function',
     function: {

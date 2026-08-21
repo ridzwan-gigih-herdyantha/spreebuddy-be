@@ -1,11 +1,11 @@
-import OpenAI from 'openai';
+import { OpenAI } from 'openai';
 import { env } from '../../config/env.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import ChatSession from './chatSession.model.js';
 import ChatMessage from './chatMessage.model.js';
 import { tools, executeTool } from './ai.tools.js';
 
-type Message = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type Message = OpenAI.ChatCompletionMessageParam;
 
 const SYSTEM_PROMPT = `You are SpreeBuddy, a friendly and knowledgeable shopping assistant for an e-commerce store.
 You help users discover products, compare options, check price/stock, and manage their wishlist.
