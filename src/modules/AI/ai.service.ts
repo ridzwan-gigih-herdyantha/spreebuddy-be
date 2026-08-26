@@ -40,7 +40,7 @@ STREAMING & FORMATTING (your reply is streamed to the user token-by-token — wr
 
 const HISTORY_LIMIT = 10;
 const MAX_TOOL_STEPS = 5;
-const FALLBACK_REPLY = 'Sorry, I could not generate a response right now. Please try again.';
+export const FALLBACK_REPLY = 'Sorry, I could not generate a response right now. Please try again.';
 const CLOSING_PROMPT =
   'Answer the user now, in plain text, using the tool results already gathered above. Do not call any tools.';
 

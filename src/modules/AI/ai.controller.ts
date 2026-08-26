@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import * as aiService from './ai.service.js';
+import * as aiStats from './ai.stats.js';
 import { ChatSessionResource, ChatMessageResource } from './ai.resource.js';
 import { CreateSessionBody, SendMessageBody } from './ai.schema.js';
 
@@ -13,6 +14,16 @@ export async function createSessionHandler(req: Request, res: Response) {
 export async function listSessionsHandler(req: Request, res: Response) {
   const sessions = await aiService.listSessions(req.user!.id);
   return sendSuccess(res, ChatSessionResource.collection(sessions), 'Sessions retrieved');
+}
+
+// Admin-only: store-wide chat usage.
+export async function chatStatsHandler(_req: Request, res: Response) {
+  return sendSuccess(res, await aiStats.chatStats(), 'Chat stats retrieved');
+}
+
+// Admin-only: credit usage for the configured AI key.
+export async function aiUsageHandler(_req: Request, res: Response) {
+  return sendSuccess(res, await aiStats.aiUsage(), 'AI usage retrieved');
 }
 
 export async function getSessionHandler(req: Request, res: Response) {
