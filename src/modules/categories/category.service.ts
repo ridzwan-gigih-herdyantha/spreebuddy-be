@@ -2,6 +2,7 @@ import { QueryFilter } from 'mongoose';
 import { ApiError } from '../../common/errors/ApiError.js';
 import { escapeRegExp } from '../../common/utils/escapeRegex.js';
 import Category, { ICategory } from './category.model.js';
+import Product from '../products/product.model.js';
 import { CreateCategoryBody, UpdateCategoryBody } from './category.schema.js';
 
 export async function listCategories({ skip, limit, search }: { skip: number; limit: number; search?: string }) {
@@ -40,14 +41,29 @@ export async function updateCategory(id: string, update: UpdateCategoryBody) {
         if (clash) throw ApiError.conflict('Category with this name already exists');
     }
 
+    const previousName = category.name;
     Object.assign(category, update);
     await category.save();
+
+    if (update.name && update.name !== previousName) {
+        await Product.updateMany({ category: previousName }, { $set: { category: update.name } });
+    }
+
     return category;
 }
 
 export async function deleteCategory(id: string) {
-    const category = await Category.findByIdAndDelete(id);
+    const category = await Category.findById(id);
     if (!category) throw ApiError.notFound('Category not found');
+
+    const inUse = await Product.countDocuments({ category: category.name });
+    if (inUse > 0) {
+        throw ApiError.conflict(
+            `Cannot delete "${category.name}" while ${inUse} product${inUse === 1 ? '' : 's'} still use it`,
+        );
+    }
+
+    await category.deleteOne();
     return category;
 }
 

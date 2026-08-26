@@ -28,7 +28,7 @@ export async function aiUsageHandler(_req: Request, res: Response) {
     aiStats.aiMeter(),
     aiStats.modelLimits(),
   ]);
-  return sendSuccess(res, { account, meter, model }, 'AI usage retrieved');
+  return sendSuccess(res, { account, meter, model, runtime: aiStats.aiRuntime() }, 'AI usage retrieved');
 }
 
 export async function getSessionHandler(req: Request, res: Response) {

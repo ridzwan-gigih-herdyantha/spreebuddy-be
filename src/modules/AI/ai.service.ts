@@ -39,8 +39,8 @@ STREAMING & FORMATTING (your reply is streamed to the user token-by-token — wr
 - Avoid heavy markdown that streams awkwardly (large tables, deeply nested lists). The app already renders comparison tables from the attachment — describe them in prose instead.
 - Keep formatting consistent within a reply: use the same bullet style and heading level throughout; don't switch mid-message.`;
 
-const HISTORY_LIMIT = 10;
-const MAX_TOOL_STEPS = 5;
+export const HISTORY_LIMIT = 10;
+export const MAX_TOOL_STEPS = 5;
 export const FALLBACK_REPLY = 'Sorry, I could not generate a response right now. Please try again.';
 const CLOSING_PROMPT =
   'Answer the user now, in plain text, using the tool results already gathered above. Do not call any tools.';

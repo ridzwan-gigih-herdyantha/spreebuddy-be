@@ -1,7 +1,8 @@
 import ChatSession from './chatSession.model.js';
 import ChatMessage from './chatMessage.model.js';
 import { env } from '../../config/env.js';
-import { FALLBACK_REPLY } from './ai.service.js';
+import { FALLBACK_REPLY, HISTORY_LIMIT, MAX_TOOL_STEPS } from './ai.service.js';
+import { tools } from './ai.tools.js';
 import AiCall from './aiCall.model.js';
 
 const DAY = 86_400_000;
@@ -237,4 +238,13 @@ export async function modelLimits() {
   } catch {
     return null;
   }
+}
+
+// The knobs the assistant actually runs with, for the settings screen.
+export function aiRuntime() {
+  return {
+    historyLimit: HISTORY_LIMIT,
+    maxToolSteps: MAX_TOOL_STEPS,
+    tools: tools.flatMap((t) => (t.type === 'function' ? [t.function.name] : [])),
+  };
 }

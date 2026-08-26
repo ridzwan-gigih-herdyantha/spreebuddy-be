@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { parsePagination, paginationMeta } from '../../common/http/pagination.js';
 import * as orderService from './order.service.js';
+import { orderStats, parseDays } from './order.stats.js';
 import { OrderResource } from './order.resource.js';
 import { ROLES } from '../../common/constants/roles.js';
 import { ApiError } from '../../common/errors/ApiError.js';
@@ -40,6 +41,15 @@ export async function listOrdersHandler(req: Request, res: Response) {
     'Orders retrieved',
     200,
     paginationMeta(total, page, limit),
+  );
+}
+
+export async function orderStatsHandler(req: Request, res: Response) {
+  const stats = await orderStats(parseDays(req.query.days));
+  return sendSuccess(
+    res,
+    { ...stats, recent: OrderResource.collection(stats.recent) },
+    'Order stats retrieved',
   );
 }
 

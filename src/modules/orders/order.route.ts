@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   createOrdersHandler,
+  orderStatsHandler,
   listOrdersHandler,
   getOrderHandler,
   cancelOrderHandler,
@@ -20,6 +21,7 @@ router.use(authenticate);
 
 router.get('/', listOrdersHandler);
 router.post('/', validateBody(createOrdersSchema), createOrdersHandler);
+router.get('/stats', requireRole(ROLES.ADMIN), orderStatsHandler);
 router.get('/:id', getOrderHandler);
 
 // Admin only, only from pending/processing.
