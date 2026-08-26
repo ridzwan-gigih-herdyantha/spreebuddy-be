@@ -24,6 +24,12 @@ export async function listUsers(skip: number, limit: number, search?: string) {
   return { users, total };
 }
 
+export async function getUser(id: string) {
+  const user = await User.findOne({ _id: id, ...NON_ADMIN_FILTER });
+  if (!user) throw ApiError.notFound('User not found');
+  return user;
+}
+
 export async function updateUser(id: string, update: UpdateUserInput) {
 
   const user = await User.findById(id).select('+password');

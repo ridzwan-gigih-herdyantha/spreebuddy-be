@@ -21,6 +21,12 @@ export async function listUsers(req: Request, res: Response) {
   );
 }
 
+// Admin-only: one user by id.
+export async function getUserHandler(req: Request, res: Response) {
+  const user = await userService.getUser(String(req.params.id));
+  return sendSuccess(res, await serializeUserWithUrls(user), 'User retrieved');
+}
+
 // Admin-only: update a user. Accepts JSON or multipart (with an `avatar` file).
 export async function updateUserHandler(req: Request, res: Response) {
   const id = String(req.params.id);
