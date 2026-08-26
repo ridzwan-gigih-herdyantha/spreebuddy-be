@@ -2,6 +2,7 @@ import ChatSession from './chatSession.model.js';
 import ChatMessage from './chatMessage.model.js';
 import { env } from '../../config/env.js';
 import { FALLBACK_REPLY } from './ai.service.js';
+import AiCall from './aiCall.model.js';
 
 const DAY = 86_400_000;
 const SERIES_DAYS = 14;
@@ -143,4 +144,97 @@ export async function aiUsage() {
     usageWeekly: data.usage_weekly,
     usageMonthly: data.usage_monthly,
   };
+}
+
+// Requests and tokens actually spent through this server. The provider does not
+// report either, so this ledger is the only record of them.
+export async function aiMeter() {
+  const today = startOfToday();
+  const since = new Date(today.getTime() - (SERIES_DAYS - 1) * DAY);
+
+  const sum = async (match: Record<string, unknown>) => {
+    const [row] = await AiCall.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: null,
+          calls: { $sum: 1 },
+          prompt: { $sum: '$promptTokens' },
+          completion: { $sum: '$completionTokens' },
+          total: { $sum: '$totalTokens' },
+          cost: { $sum: '$cost' },
+        },
+      },
+    ]);
+    return {
+      calls: row?.calls ?? 0,
+      prompt: row?.prompt ?? 0,
+      completion: row?.completion ?? 0,
+      total: row?.total ?? 0,
+      cost: row?.cost ?? 0,
+    };
+  };
+
+  const [allTime, todayTotals, failedToday, byModel, daily, lastRejection] = await Promise.all([
+    sum({ ok: true }),
+    sum({ ok: true, createdAt: { $gte: today } }),
+    AiCall.countDocuments({ ok: false, createdAt: { $gte: today } }),
+    AiCall.aggregate([
+      { $match: { ok: true } },
+      { $group: { _id: '$model', calls: { $sum: 1 }, tokens: { $sum: '$totalTokens' } } },
+      { $sort: { calls: -1 } },
+      { $limit: 6 },
+    ]),
+    AiCall.aggregate([
+      { $match: { createdAt: { $gte: since } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          calls: { $sum: 1 },
+          tokens: { $sum: '$totalTokens' },
+        },
+      },
+    ]),
+    AiCall.findOne({ ok: false, status: 429 }).sort({ createdAt: -1 }),
+  ]);
+
+  const byDay = new Map(daily.map((r) => [r._id as string, r]));
+
+  return {
+    allTime,
+    today: todayTotals,
+    failedToday,
+    models: byModel.map((m) => ({ model: m._id as string, calls: m.calls, tokens: m.tokens })),
+    daily: Array.from({ length: SERIES_DAYS }, (_, i) => {
+      const date = dayKey(new Date(since.getTime() + i * DAY));
+      const row = byDay.get(date);
+      return { date, calls: row?.calls ?? 0, tokens: row?.tokens ?? 0 };
+    }),
+    // The requests-per-day cap only ever appears on a rejection.
+    lastRejection: lastRejection
+      ? { at: lastRejection.createdAt, rateLimit: lastRejection.rateLimit ?? null }
+      : null,
+  };
+}
+
+// Context window and completion ceiling for the configured model.
+export async function modelLimits() {
+  try {
+    const res = await fetch(`${env.openrouter.baseUrl}/models`);
+    if (!res.ok) return null;
+
+    const { data } = (await res.json()) as { data: Array<Record<string, unknown>> };
+    const model = data.find((m) => m.id === env.openrouter.model);
+    if (!model) return null;
+
+    const top = (model.top_provider ?? {}) as Record<string, number | null>;
+    return {
+      id: model.id as string,
+      name: (model.name as string) ?? null,
+      contextLength: (model.context_length as number) ?? top.context_length ?? null,
+      maxCompletionTokens: top.max_completion_tokens ?? null,
+    };
+  } catch {
+    return null;
+  }
 }

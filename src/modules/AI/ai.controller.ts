@@ -23,7 +23,12 @@ export async function chatStatsHandler(_req: Request, res: Response) {
 
 // Admin-only: credit usage for the configured AI key.
 export async function aiUsageHandler(_req: Request, res: Response) {
-  return sendSuccess(res, await aiStats.aiUsage(), 'AI usage retrieved');
+  const [account, meter, model] = await Promise.all([
+    aiStats.aiUsage(),
+    aiStats.aiMeter(),
+    aiStats.modelLimits(),
+  ]);
+  return sendSuccess(res, { account, meter, model }, 'AI usage retrieved');
 }
 
 export async function getSessionHandler(req: Request, res: Response) {

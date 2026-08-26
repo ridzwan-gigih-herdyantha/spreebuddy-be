@@ -4,6 +4,7 @@ import { ApiError } from '../../common/errors/ApiError.js';
 import ChatSession from './chatSession.model.js';
 import ChatMessage from './chatMessage.model.js';
 import { tools, executeTool } from './ai.tools.js';
+import { recordFailure, recordUsage } from './ai.meter.js';
 
 type Message = OpenAI.ChatCompletionMessageParam;
 
@@ -56,6 +57,26 @@ function getClient(): OpenAI {
   return client;
 }
 
+type Kind = 'chat' | 'title' | 'closing';
+
+// Single funnel for non-streaming completions, so every upstream call is
+// counted whether it succeeds or is rejected.
+async function metered(
+  ai: OpenAI,
+  kind: Kind,
+  userId: string | undefined,
+  params: OpenAI.ChatCompletionCreateParamsNonStreaming,
+) {
+  try {
+    const res = await ai.chat.completions.create(params);
+    await recordUsage(kind, userId, res.model, res.usage);
+    return res;
+  } catch (err) {
+    await recordFailure(kind, userId, err);
+    throw err;
+  }
+}
+
 export function friendlyAiError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
   if (/429|quota|rate.?limit|insufficient/i.test(msg)) return 'AI quota or rate limit reached. Please try again later.';
@@ -66,7 +87,7 @@ export function friendlyAiError(err: unknown): string {
 async function generateTitle(userText: string, reply: string): Promise<string> {
   const fallback = userText.trim().slice(0, 60) || 'New chat';
   try {
-    const res = await getClient().chat.completions.create({
+    const res = await metered(getClient(), 'title', undefined, {
       model: env.openrouter.model,
       messages: [
         { role: 'system', content: 'Create a concise 3-6 word chat title summarizing the topic. Use the user\'s language. Return ONLY the title, no quotes or trailing punctuation.' },
@@ -130,14 +151,14 @@ async function buildMessages(sessionId: string, text: string): Promise<Message[]
 async function closingAnswer(
   ai: OpenAI,
   messages: Message[],
-  ctx: { steps: number; finishReason?: string },
+  ctx: { steps: number; finishReason?: string; userId?: string },
 ): Promise<string> {
   console.warn(
     `[ai] no reply after ${ctx.steps} step(s) (finish_reason=${ctx.finishReason ?? 'none'}), retrying without tools`,
   );
 
   try {
-    const res = await ai.chat.completions.create({
+    const res = await metered(ai, 'closing', ctx.userId, {
       model: env.openrouter.model,
       messages: [...messages, { role: 'user', content: CLOSING_PROMPT }],
     });
@@ -172,7 +193,7 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
     steps = step + 1;
-    const res = await ai.chat.completions.create({ model: env.openrouter.model, messages, tools });
+    const res = await metered(ai, 'chat', userId, { model: env.openrouter.model, messages, tools });
     const choice = res.choices[0];
     finishReason = choice?.finish_reason;
     const msg = choice?.message;
@@ -193,7 +214,7 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
     break;
   }
 
-  if (!reply.trim()) reply = await closingAnswer(ai, messages, { steps, finishReason });
+  if (!reply.trim()) reply = await closingAnswer(ai, messages, { steps, finishReason, userId });
   if (!reply.trim()) reply = FALLBACK_REPLY;
 
   await persist(sessionId, text, reply, attachments);
@@ -224,12 +245,22 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
     steps = step + 1;
-    const stream = await ai.chat.completions.create({ model: env.openrouter.model, messages, tools, stream: true });
+    const stream = await ai.chat.completions.create({
+      model: env.openrouter.model,
+      messages,
+      tools,
+      stream: true,
+      stream_options: { include_usage: true },
+    });
 
+    let servedModel: string | undefined;
+    let usage: OpenAI.CompletionUsage | undefined;
     let content = '';
     const acc: Record<number, { id: string; name: string; args: string }> = {};
     for await (const chunk of stream) {
       finishReason = chunk.choices[0]?.finish_reason ?? finishReason;
+      servedModel = chunk.model ?? servedModel;
+      if (chunk.usage) usage = chunk.usage;
       const delta = chunk.choices[0]?.delta;
       if (delta?.content) {
         content += delta.content;
@@ -242,6 +273,8 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
         if (tc.function?.arguments) slot.args += tc.function.arguments;
       }
     }
+
+    await recordUsage('chat', userId, servedModel, usage);
 
     const calls = Object.values(acc);
     if (calls.length > 0) {
@@ -267,7 +300,7 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
 
   if (!reply.trim()) {
     // The stream produced nothing, so the recovered text is emitted in one go.
-    reply = await closingAnswer(ai, messages, { steps, finishReason });
+    reply = await closingAnswer(ai, messages, { steps, finishReason, userId });
     if (reply.trim()) yield { type: 'chunk', text: reply };
   }
   if (!reply.trim()) {
