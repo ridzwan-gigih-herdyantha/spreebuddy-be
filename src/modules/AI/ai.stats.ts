@@ -124,15 +124,20 @@ export async function aiUsage() {
     return { configured: true as const, reachable: false as const, status: res.status };
   }
 
-  const { data } = (await res.json()) as { data: Record<string, number | boolean | null> };
+  const { data } = (await res.json()) as {
+    data: Record<string, number | string | boolean | null>;
+  };
 
   return {
     configured: true as const,
     reachable: true as const,
     model: env.openrouter.model,
     freeTier: Boolean(data.is_free_tier),
+    // `limit` is a spending cap in USD: null means uncapped, 0 means no credit.
     limit: data.limit,
     limitRemaining: data.limit_remaining,
+    limitReset: data.limit_reset,
+    expiresAt: data.expires_at,
     usage: data.usage,
     usageDaily: data.usage_daily,
     usageWeekly: data.usage_weekly,
