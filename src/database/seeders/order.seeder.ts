@@ -28,6 +28,7 @@ export default {
         const product = faker.helpers.arrayElement(products);
         const quantity = faker.number.int({ min: 1, max: 4 });
         const price = product.salePrice ?? product.regularPrice;
+        const createdAt = faker.date.past({ years: 1 });
         docs.push({
           userId: user._id,
           productId: product._id,
@@ -35,6 +36,7 @@ export default {
           price,
           total: price * quantity,
           status: faker.helpers.arrayElement(statuses),
+          createdAt,
         });
       }
     }
