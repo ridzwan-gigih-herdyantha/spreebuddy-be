@@ -4,9 +4,24 @@ import { parsePagination, paginationMeta } from '../../common/http/pagination.js
 import * as orderService from './order.service.js';
 import { OrderResource } from './order.resource.js';
 import { ROLES } from '../../common/constants/roles.js';
+import { ApiError } from '../../common/errors/ApiError.js';
+import { OrderStatus } from './order.model.js';
 import { CreateOrdersBody, UpdateOrderStatusBody } from './order.schema.js';
 
 const isAdmin = (req: Request) => req.user!.role === ROLES.ADMIN;
+
+// Optional ?status= filter, so the client never has to page then filter.
+function parseStatusFilter(raw: unknown): OrderStatus | undefined {
+  if (typeof raw !== 'string' || !raw.trim()) return undefined;
+  const value = raw.trim().toLowerCase();
+  const match = Object.values(OrderStatus).find((s) => s === value);
+  if (!match) {
+    throw ApiError.validation('Invalid status filter', [
+      { field: 'status', message: `status must be one of: ${Object.values(OrderStatus).join(', ')}` },
+    ]);
+  }
+  return match;
+}
 
 export async function createOrdersHandler(req: Request, res: Response) {
   const { orders } = req.body as CreateOrdersBody;
@@ -17,7 +32,8 @@ export async function createOrdersHandler(req: Request, res: Response) {
 // Admin sees all orders; a regular user sees only their own.
 export async function listOrdersHandler(req: Request, res: Response) {
   const { page, limit, skip } = parsePagination(req.query);
-  const { orders, total } = await orderService.listOrders(isAdmin(req), req.user!.id, skip, limit);
+  const status = parseStatusFilter(req.query.status);
+  const { orders, total } = await orderService.listOrders(isAdmin(req), req.user!.id, skip, limit, status);
   return sendSuccess(
     res,
     OrderResource.collection(orders),

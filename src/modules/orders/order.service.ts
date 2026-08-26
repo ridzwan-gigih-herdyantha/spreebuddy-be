@@ -8,8 +8,15 @@ export function createOrders(userId: string, items: OrderItemInput[]) {
   return lifecycle.placeOrders(userId, items);
 }
 
-export async function listOrders(isAdmin: boolean, userId: string, skip: number, limit: number) {
-  const filter = isAdmin ? {} : { userId };
+export async function listOrders(
+  isAdmin: boolean,
+  userId: string,
+  skip: number,
+  limit: number,
+  status?: OrderStatus,
+) {
+  const filter: Record<string, unknown> = isAdmin ? {} : { userId };
+  if (status) filter.status = status;
   const [orders, total] = await Promise.all([
     Order.find(filter).sort({ createdAt: -1, _id: -1 }).skip(skip).limit(limit).populate(['productId', 'userId']),
     Order.countDocuments(filter),
