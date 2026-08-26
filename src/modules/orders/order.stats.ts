@@ -3,7 +3,6 @@ import Product from '../products/product.model.js';
 import { User, NON_ADMIN_FILTER } from '../users/user.model.js';
 
 const DAY = 86_400_000;
-const BUCKETS = 8;
 const RECENT = 6;
 
 const dayKey = (date: Date) => date.toISOString().slice(0, 10);
@@ -80,40 +79,26 @@ export async function orderStats(days: number | null) {
 
   const spanDays =
     days ??
-    Math.max(
-      BUCKETS,
-      oldest ? Math.ceil((today.getTime() - startOfDay(oldest.createdAt).getTime()) / DAY) + 1 : BUCKETS,
-    );
-  const bucketDays = Math.max(1, Math.ceil(spanDays / BUCKETS));
+    (oldest
+      ? Math.ceil((today.getTime() - startOfDay(oldest.createdAt).getTime()) / DAY) + 1
+      : 1);
 
   const byDay = new Map(daily.map((r) => [r._id as string, r]));
-  const series = Array.from({ length: BUCKETS }, (_, index) => {
-    const end = today.getTime() - (BUCKETS - 1 - index) * bucketDays * DAY;
-    const start = end - (bucketDays - 1) * DAY;
-    let orders = 0;
-    let revenue = 0;
-
-    for (let offset = 0; offset < bucketDays; offset += 1) {
-      const row = byDay.get(dayKey(new Date(start + offset * DAY)));
-      if (row) {
-        orders += row.orders as number;
-        revenue += row.revenue as number;
-      }
-    }
-
-    const from = new Date(start);
+  const series = Array.from({ length: spanDays }, (_, index) => {
+    const at = new Date(today.getTime() - (spanDays - 1 - index) * DAY);
+    const row = byDay.get(dayKey(at));
     return {
-      label: `${from.getUTCDate()}/${from.getUTCMonth() + 1}`,
-      date: dayKey(from),
-      orders,
-      revenue,
+      date: dayKey(at),
+      label: `${at.getUTCDate()}/${at.getUTCMonth() + 1}`,
+      orders: (row?.orders as number) ?? 0,
+      revenue: (row?.revenue as number) ?? 0,
     };
   });
 
   const counts = new Map(statuses.map((r) => [r._id as string, r.count as number]));
 
   return {
-    range: { days, bucketDays, buckets: BUCKETS, since: since ? since.toISOString() : null },
+    range: { days, spanDays, since: since ? since.toISOString() : null },
     totals: {
       revenue: totals[0]?.revenue ?? 0,
       orders: totals[0]?.orders ?? 0,
