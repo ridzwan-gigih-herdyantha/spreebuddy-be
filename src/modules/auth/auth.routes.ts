@@ -1,8 +1,15 @@
 import { Router } from 'express';
-import { loginHandler, logoutHandler, meHandler, registerHandler } from './auth.controller.js';
+import {
+  loginHandler,
+  logoutHandler,
+  meHandler,
+  registerHandler,
+  updateMeHandler,
+} from './auth.controller.js';
 import { authenticate } from '../../common/middlewares/authenticate.middleware.js';
 import { validateBody } from '../../common/middlewares/validate.middleware.js';
 import { registerSchema } from './auth.schema.js';
+import { updateUserSchema } from '../users/user.schema.js';
 import { uploadAvatar } from '../users/user.upload.js';
 
 const router = Router();
@@ -12,5 +19,6 @@ router.post('/register', uploadAvatar, validateBody(registerSchema), registerHan
 router.post('/login', loginHandler);
 router.post('/logout', logoutHandler);
 router.get('/me', authenticate, meHandler);
+router.patch('/me', authenticate, uploadAvatar, validateBody(updateUserSchema), updateMeHandler);
 
 export default router;

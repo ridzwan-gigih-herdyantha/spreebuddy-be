@@ -6,6 +6,8 @@ import { sendSuccess, sendCreated } from '../../common/http/response.js';
 import { isProduction } from '../../config/env.js';
 import { User } from '../users/user.model.js';
 import { serializeUserWithUrls } from '../users/user.resource.js';
+import * as userService from '../users/user.service.js';
+import { UpdateUserBody } from '../users/user.schema.js';
 import { fileService } from '../../common/services/file.service.js';
 
 const TOKEN_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -29,6 +31,21 @@ export async function registerHandler(req: Request, res: Response) {
   } catch (err) {
     // Remove the just-uploaded avatar if registration fails.
     if (avatar) await fileService.removeByStoredPath(avatar);
+    throw err;
+  }
+}
+
+// Self-service profile update. The schema has no `role`, so this cannot
+// escalate privileges, and the id always comes from the token.
+export async function updateMeHandler(req: Request, res: Response) {
+  const update: userService.UpdateUserInput = { ...(req.body as UpdateUserBody) };
+  if (req.file) update.avatar = await fileService.upload(req.file, 'avatars');
+
+  try {
+    const user = await userService.updateUser(req.user!.id, update);
+    return sendSuccess(res, await serializeUserWithUrls(user), 'Profile updated');
+  } catch (err) {
+    if (update.avatar) await fileService.removeByStoredPath(update.avatar);
     throw err;
   }
 }
