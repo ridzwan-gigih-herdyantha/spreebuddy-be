@@ -57,6 +57,15 @@ export async function listPaymentsHandler(req: Request, res: Response) {
   );
 }
 
+export async function getPaymentBySessionHandler(req: Request, res: Response) {
+  const payment = await paymentService.getPaymentBySession(
+    String(req.params.providerRef),
+    isAdmin(req),
+    req.user!.id,
+  );
+  return sendSuccess(res, PaymentResource.item(payment), 'Payment retrieved');
+}
+
 export async function getPaymentHandler(req: Request, res: Response) {
   const payment = await paymentService.getPayment(
     String(req.params.id),

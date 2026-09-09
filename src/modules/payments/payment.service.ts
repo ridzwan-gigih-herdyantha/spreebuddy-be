@@ -34,6 +34,19 @@ export async function getPayment(id: string, isAdmin: boolean, userId: string) {
   return payment.populate('orderIds');
 }
 
+export async function getPaymentBySession(
+  providerRef: string,
+  isAdmin: boolean,
+  userId: string,
+) {
+  const payment = await Payment.findOne({ providerRef });
+  if (!payment) throw ApiError.notFound('Payment not found');
+  if (!isAdmin && String(payment.userId) !== userId) {
+    throw ApiError.forbidden('This is not your payment');
+  }
+  return payment.populate('orderIds');
+}
+
 export async function listPayments(
   isAdmin: boolean,
   userId: string,

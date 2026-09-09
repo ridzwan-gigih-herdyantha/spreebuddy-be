@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   createCheckoutHandler,
+  getPaymentBySessionHandler,
   getPaymentHandler,
   listPaymentsHandler,
   paymentConfigHandler,
@@ -19,6 +20,7 @@ router.use(authenticate);
 
 router.get('/', listPaymentsHandler);
 router.post('/checkout', validateBody(createCheckoutSchema), createCheckoutHandler);
+router.get('/by-session/:providerRef', getPaymentBySessionHandler);
 router.get('/:id', getPaymentHandler);
 
 export default router;
