@@ -9,6 +9,7 @@ import wishlistRoutes from '../modules/wishlists/wishlist.route.js';
 import orderRoutes from '../modules/orders/order.route.js';
 import cartRoutes from '../modules/cart/cart.route.js';
 import aiRoutes from '../modules/AI/ai.route.js';
+import paymentRoutes from '../modules/payments/payment.route.js';
 
 import { rateLimit } from 'express-rate-limit';
 // import MongoStore from 'rate-limit-mongo';
@@ -51,7 +52,8 @@ router.get('/', (_req, res) => {
         categories: 'GET /api/v1/categories',
         wishlist: 'GET /api/v1/wishlists',
         orders: 'GET /api/v1/orders',
-        cart: 'GET /api/v1/cart',
+        cart: 'GET /api/v1/carts',
+        payments: 'POST /api/v1/payments/checkout',
         ai: 'POST /api/v1/sessions/:id/messages',
       },
     },
@@ -68,6 +70,7 @@ router.use('/categories', categoryRoutes);
 router.use('/wishlists', wishlistRoutes);
 router.use('/orders', orderRoutes);
 router.use('/carts', cartRoutes);
+router.use('/payments', paymentRoutes);
 router.use('/sessions', aiRoutes);
 
 export default router;

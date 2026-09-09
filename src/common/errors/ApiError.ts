@@ -60,6 +60,10 @@ export class ApiError extends Error {
     return new ApiError(500, message, ERROR_CODES.INTERNAL, undefined, false);
   }
 
+  static serviceUnavailable(message = 'Service Unavailable') {
+    return new ApiError(503, message, ERROR_CODES.SERVICE_UNAVAILABLE);
+  }
+
   static tooManyRequests(message = 'Too Many Requests') {
     return new ApiError(429, message, ERROR_CODES.TOO_MANY_REQUESTS);
   }

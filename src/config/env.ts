@@ -26,6 +26,16 @@ export const env = {
     bucket: process.env.CLOUDFLARE_R2_BUCKET,
     // publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL, // public bucket URL / custom domain
   },
+  // Public URL of the storefront, used to build Stripe return URLs.
+  appUrl: process.env.APP_URL ?? 'http://localhost:5173',
+  // Stripe. Absent keys leave the payment routes disabled rather than crashing boot.
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    currency: process.env.STRIPE_CURRENCY ?? 'usd',
+    // Point the SDK at stripe-mock or a local stub instead of api.stripe.com.
+    apiBase: process.env.STRIPE_API_BASE,
+  },
   openrouter: {
     apiKey: process.env.OPENROUTER_API_KEY,
     baseUrl: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',

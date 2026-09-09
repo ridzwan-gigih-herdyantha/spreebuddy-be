@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model, HydratedDocument, Types } from 'mongoose';
+import { OrderPaymentStatus } from '../payments/payment.model.js';
 
 export enum OrderStatus {
     PENDING = 'pending',
@@ -15,6 +16,8 @@ export interface IOrder {
   price: number; // unit price snapshot at order time
   total: number; // price * quantity
   status: OrderStatus;
+  paymentId?: Types.ObjectId;
+  paymentStatus: OrderPaymentStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +55,16 @@ const orderSchema = new Schema<IOrder, OrderModel>(
     status: {
         type: String,
         enum: Object.values(OrderStatus), default: OrderStatus.PENDING },
+    paymentId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Payment',
+        index: true
+    },
+    paymentStatus: {
+        type: String,
+        enum: Object.values(OrderPaymentStatus),
+        default: OrderPaymentStatus.UNPAID
+    },
   },
   { timestamps: true },
 );

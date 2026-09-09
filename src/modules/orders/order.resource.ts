@@ -13,6 +13,8 @@ export interface OrderResponse {
   price: number;
   total: number;
   status: string;
+  paymentStatus: string;
+  paymentId: string | null;
   product: ProductResponse | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -25,6 +27,8 @@ export const OrderResource = makeResource<OrderDocument, OrderResponse>((o) => (
   price: o.price,
   total: o.total,
   status: o.status,
+  paymentStatus: o.paymentStatus,
+  paymentId: o.paymentId ? String(o.paymentId) : null,
   // productId is populated in the service; null if the product was deleted.
   product: o.populated('productId')
     ? ProductResource.item(o.productId as unknown as ProductDocument)

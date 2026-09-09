@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes/index.js';
 import fileRoutes from './modules/files/file.routes.js';
+import { stripeWebhookHandler } from './modules/payments/payment.webhook.js';
 import { connectDB } from './config/db.js';
 import { sendSuccess } from './common/http/response.js';
 import { notFoundHandler } from './common/middlewares/notFound.middleware.js';
@@ -20,6 +21,16 @@ async function ensureDbConnected(_req: Request, _res: Response, next: NextFuncti
 // Core middlewares
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
+
+// Stripe signs the raw request body, so this route is mounted ahead of the JSON
+// parser and outside the authenticated router.
+app.post(
+  '/api/v1/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  ensureDbConnected,
+  stripeWebhookHandler,
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
