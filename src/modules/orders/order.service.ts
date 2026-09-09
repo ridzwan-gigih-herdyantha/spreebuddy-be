@@ -25,12 +25,11 @@ export async function listOrders(
 }
 
 export async function getOrder(id: string, isAdmin: boolean, userId: string) {
-  const order = await Order.findById(id).populate(['productId', 'userId']);
-  if (!order) throw ApiError.notFound('Order not found');
+  const order = await loadOrder(id);
   if (!isAdmin && String(order.userId) !== userId) {
     throw ApiError.forbidden('This is not your order');
   }
-  return order;
+  return order.populate(['productId', 'userId']);
 }
 
 async function loadOrder(id: string) {
