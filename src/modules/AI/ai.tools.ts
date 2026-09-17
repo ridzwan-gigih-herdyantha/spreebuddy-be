@@ -8,6 +8,7 @@ function shapeProduct(p: ProductDocument) {
     id: p.id,
     name: p.name,
     slug: p.slug,
+    images: p.images?.length ? [p.images[0]] : [],
     category: p.category,
     regularPrice: p.regularPrice,
     salePrice: p.salePrice ?? null,
