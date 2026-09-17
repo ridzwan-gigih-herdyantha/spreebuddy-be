@@ -33,8 +33,7 @@ export interface IPayment {
   providerRef: string;
   paymentIntentId?: string;
   checkoutUrl?: string;
-  // Every amount is an integer in the currency's minor unit. IDR is
-  // zero-decimal, so for this store the minor unit is the rupiah itself.
+  // Every amount is an integer in the currency's minor unit (cents).
   subtotal: number;
   shipping: number;
   tax: number;
@@ -76,7 +75,7 @@ const paymentSchema = new Schema<IPayment, PaymentModel>(
     shipping: { type: Number, required: true, min: 0, default: 0 },
     tax: { type: Number, required: true, min: 0, default: 0 },
     total: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: 'idr' },
+    currency: { type: String, required: true, default: 'usd' },
     status: {
       type: String,
       enum: Object.values(PaymentStatus),

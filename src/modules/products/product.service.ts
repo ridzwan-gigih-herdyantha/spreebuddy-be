@@ -28,7 +28,7 @@ export async function listProducts({
         ];
     }
 
-    // Filter by one or more categories (comma-separated), e.g. ?category=Fashion,Elektronik
+    // Filter by one or more categories (comma-separated), e.g. ?category=Books,Electronics
     const categories = category
         ? category.split(',').map((c) => c.trim()).filter(Boolean)
         : [];

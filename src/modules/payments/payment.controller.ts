@@ -5,7 +5,7 @@ import { ROLES } from '../../common/constants/roles.js';
 import * as paymentService from './payment.service.js';
 import { PaymentResource } from './payment.resource.js';
 import { CreateCheckoutBody } from './payment.schema.js';
-import { FREE_SHIPPING_FROM, SHIPPING_FLAT, TAX_RATE, toMajor } from './payment.pricing.js';
+import { FREE_SHIPPING_FROM, SHIPPING_FLAT, TAX_RATE, toDollars } from './payment.pricing.js';
 import { paymentsConfigured } from './stripe.client.js';
 
 const isAdmin = (req: Request) => req.user!.role === ROLES.ADMIN;
@@ -19,8 +19,8 @@ export async function paymentConfigHandler(_req: Request, res: Response) {
       enabled: paymentsConfigured(),
       provider: 'stripe',
       taxRate: TAX_RATE,
-      freeShippingFrom: toMajor(FREE_SHIPPING_FROM),
-      shippingFlat: toMajor(SHIPPING_FLAT),
+      freeShippingFrom: toDollars(FREE_SHIPPING_FROM),
+      shippingFlat: toDollars(SHIPPING_FLAT),
     },
     'Payment config retrieved',
   );

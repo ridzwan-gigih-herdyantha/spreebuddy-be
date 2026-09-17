@@ -3,7 +3,7 @@ import { formatDateDMY } from '../../common/utils/formatDate.js';
 import { OrderResource, OrderResponse } from '../orders/order.resource.js';
 import { OrderDocument } from '../orders/order.model.js';
 import { PaymentDocument, ShippingAddress } from './payment.model.js';
-import { toMajor } from './payment.pricing.js';
+import { toDollars } from './payment.pricing.js';
 
 export interface PaymentResponse {
   id: string;
@@ -11,8 +11,8 @@ export interface PaymentResponse {
   provider: string;
   providerRef: string;
   currency: string;
-  // Amounts leave the API in major units, matching how prices are exposed
-  // everywhere else. IDR has no minor unit, so these match the stored integers.
+  // Amounts leave the API as decimal units, matching how prices are exposed
+  // everywhere else; cents stay internal.
   subtotal: number;
   shipping: number;
   tax: number;
@@ -34,10 +34,10 @@ export const PaymentResource = makeResource<PaymentDocument, PaymentResponse>((p
   provider: p.provider,
   providerRef: p.providerRef,
   currency: p.currency,
-  subtotal: toMajor(p.subtotal),
-  shipping: toMajor(p.shipping),
-  tax: toMajor(p.tax),
-  total: toMajor(p.total),
+  subtotal: toDollars(p.subtotal),
+  shipping: toDollars(p.shipping),
+  tax: toDollars(p.tax),
+  total: toDollars(p.total),
   checkoutUrl: p.checkoutUrl ?? null,
   shippingAddress: p.shippingAddress,
   failureReason: p.failureReason ?? null,
