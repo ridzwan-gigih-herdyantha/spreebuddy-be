@@ -10,6 +10,7 @@ export interface IProduct {
     slug: string;
     type: ProductType;
     description: string;
+    images: string[];
     regularPrice: number;
     salePrice?: number;
     weight: number;
@@ -47,6 +48,11 @@ const productSchema = new Schema<IProduct, ProductModel>({
     description: { 
         type: String, 
         required: true 
+    },
+    images: {
+        type: [String],
+        required: false,
+        default: []
     },
     regularPrice: { 
         type: Number, 

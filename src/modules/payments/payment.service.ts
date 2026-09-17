@@ -11,7 +11,7 @@ import Payment, {
   ShippingAddress,
 } from './payment.model.js';
 import type { PaymentDocument } from './payment.model.js';
-import { totalsFor, toCents } from './payment.pricing.js';
+import { totalsFor, toMinor } from './payment.pricing.js';
 import { stripe } from './stripe.client.js';
 
 // Sessions Stripe keeps open; past this the checkout.session.expired event
@@ -105,7 +105,7 @@ function lineItems(orders: OrderDocument[], currency: string, tax: number, shipp
       quantity: order.quantity,
       price_data: {
         currency,
-        unit_amount: toCents(order.price),
+        unit_amount: toMinor(order.price),
         product_data: { name: product?.name ?? 'Product' },
       },
     };

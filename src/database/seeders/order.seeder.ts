@@ -1,8 +1,19 @@
 import { fakerID_ID as faker } from '@faker-js/faker';
 import Order, { OrderStatus } from '../../modules/orders/order.model.js';
+import { OrderPaymentStatus } from '../../modules/payments/payment.model.js';
 import { User } from '../../modules/users/user.model.js';
 import Product from '../../modules/products/product.model.js';
 import { ROLES } from '../../common/constants/roles.js';
+
+const ORDER_COUNT = 50;
+
+const PAYMENT_STATUS_BY_ORDER_STATUS: Record<OrderStatus, OrderPaymentStatus> = {
+  [OrderStatus.PENDING]: OrderPaymentStatus.UNPAID,
+  [OrderStatus.PROCESSING]: OrderPaymentStatus.PAID,
+  [OrderStatus.SHIPPED]: OrderPaymentStatus.PAID,
+  [OrderStatus.DELIVERED]: OrderPaymentStatus.PAID,
+  [OrderStatus.CANCELLED]: OrderPaymentStatus.FAILED,
+};
 
 export default {
   name: 'order',
@@ -20,28 +31,27 @@ export default {
     }
 
     const statuses = Object.values(OrderStatus);
-    const docs = [];
 
-    for (const user of users) {
-      const count = faker.number.int({ min: 0, max: 5 });
-      for (let i = 0; i < count; i++) {
-        const product = faker.helpers.arrayElement(products);
-        const quantity = faker.number.int({ min: 1, max: 4 });
-        const price = product.salePrice ?? product.regularPrice;
-        const createdAt = faker.date.past({ years: 1 });
-        docs.push({
-          userId: user._id,
-          productId: product._id,
-          quantity,
-          price,
-          total: price * quantity,
-          status: faker.helpers.arrayElement(statuses),
-          createdAt,
-        });
-      }
-    }
+    const docs = Array.from({ length: ORDER_COUNT }, (_, i) => {
+      const user = users[i % users.length];
+      const product = faker.helpers.arrayElement(products);
+      const quantity = faker.number.int({ min: 1, max: 4 });
+      const price = product.salePrice ?? product.regularPrice;
+      const status = faker.helpers.arrayElement(statuses);
+
+      return {
+        userId: user._id,
+        productId: product._id,
+        quantity,
+        price,
+        total: price * quantity,
+        status,
+        paymentStatus: PAYMENT_STATUS_BY_ORDER_STATUS[status],
+        createdAt: faker.date.past({ years: 1 }),
+      };
+    });
 
     await Order.insertMany(docs);
-    console.log(`[order] Seeded ${docs.length} orders for ${users.length} users`);
+    console.log(`[order] Seeded ${docs.length} orders across ${users.length} users`);
   },
 };

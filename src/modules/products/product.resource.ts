@@ -8,6 +8,7 @@ export interface ProductResponse {
   slug: string;
   type: string;
   description: string;
+  images: string[];
   regularPrice: number;
   salePrice?: number;
   weight: number;
@@ -28,6 +29,7 @@ export const ProductResource = makeResource<ProductDocument, ProductResponse>((p
   slug: p.slug,
   type: p.type,
   description: p.description,
+  images: p.images ?? [],
   regularPrice: p.regularPrice,
   salePrice: p.salePrice,
   weight: p.weight,

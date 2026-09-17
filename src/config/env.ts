@@ -32,7 +32,7 @@ export const env = {
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    currency: process.env.STRIPE_CURRENCY ?? 'usd',
+    currency: process.env.STRIPE_CURRENCY ?? 'idr',
     // Point the SDK at stripe-mock or a local stub instead of api.stripe.com.
     apiBase: process.env.STRIPE_API_BASE,
   },
