@@ -31,6 +31,11 @@ export async function aiUsageHandler(_req: Request, res: Response) {
   return sendSuccess(res, { account, meter, model, runtime: aiStats.aiRuntime() }, 'AI usage retrieved');
 }
 
+// Admin-only: how well replies stayed inside the catalogue.
+export async function groundingStatsHandler(_req: Request, res: Response) {
+  return sendSuccess(res, await aiStats.groundingStats(), 'Grounding stats retrieved');
+}
+
 export async function getSessionHandler(req: Request, res: Response) {
   const { session, messages } = await aiService.getSessionMessages(String(req.params.id), req.user!.id);
   return sendSuccess(

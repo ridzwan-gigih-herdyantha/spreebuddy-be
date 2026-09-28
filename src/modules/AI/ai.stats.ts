@@ -8,6 +8,7 @@ import AiCall from './aiCall.model.js';
 const DAY = 86_400_000;
 const SERIES_DAYS = 14;
 const TOP_USERS = 8;
+const RECENT_FLAGGED = 10;
 
 const dayKey = (date: Date) => date.toISOString().slice(0, 10);
 const startOfToday = () => {
@@ -109,6 +110,86 @@ export async function chatStats() {
     },
     daily,
     topUsers,
+    seriesDays: SERIES_DAYS,
+  };
+}
+
+// How often replies stayed inside the catalogue rows their tools returned.
+// Deliberately metadata only: the offending prices, ids and links are included
+// because they are catalogue artefacts, but no message text is, since the
+// privacy policy promises administrators cannot read conversations.
+export async function groundingStats() {
+  const today = startOfToday();
+  const since = new Date(today.getTime() - (SERIES_DAYS - 1) * DAY);
+  const checkedMatch = { role: 'model', grounding: { $ne: null } };
+
+  const [totals, byKind, series, unchecked, recent] = await Promise.all([
+    ChatMessage.aggregate([
+      { $match: checkedMatch },
+      {
+        $group: {
+          _id: null,
+          checked: { $sum: 1 },
+          clean: { $sum: { $cond: ['$grounding.ok', 1, 0] } },
+          rewritten: { $sum: { $cond: ['$grounding.retried', 1, 0] } },
+          rescued: {
+            $sum: { $cond: [{ $and: ['$grounding.retried', '$grounding.ok'] }, 1, 0] },
+          },
+          rows: { $sum: '$grounding.checked' },
+        },
+      },
+    ]),
+    ChatMessage.aggregate([
+      { $match: { role: 'model', 'grounding.ok': false } },
+      { $unwind: '$grounding.violations' },
+      { $group: { _id: '$grounding.violations.kind', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+    ChatMessage.aggregate([
+      { $match: { ...checkedMatch, createdAt: { $gte: since } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          checked: { $sum: 1 },
+          flagged: { $sum: { $cond: ['$grounding.ok', 0, 1] } },
+        },
+      },
+    ]),
+    ChatMessage.countDocuments({ role: 'model', grounding: null }),
+    ChatMessage.find({ role: 'model', 'grounding.ok': false })
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(RECENT_FLAGGED)
+      .select('sessionId createdAt grounding'),
+  ]);
+
+  const summary = totals[0] ?? { checked: 0, clean: 0, rewritten: 0, rescued: 0, rows: 0 };
+  const byDate = new Map(series.map((r) => [r._id as string, r]));
+
+  return {
+    totals: {
+      checked: summary.checked as number,
+      clean: summary.clean as number,
+      flagged: (summary.checked as number) - (summary.clean as number),
+      rewritten: summary.rewritten as number,
+      rescued: summary.rescued as number,
+      unchecked,
+      // Average catalogue rows a reply had to work from; a low number with many
+      // flags points at the tools, not the model.
+      rowsPerReply: summary.checked ? (summary.rows as number) / (summary.checked as number) : 0,
+    },
+    byKind: byKind.map((r) => ({ kind: r._id as string, count: r.count as number })),
+    daily: Array.from({ length: SERIES_DAYS }, (_, i) => {
+      const date = dayKey(new Date(since.getTime() + i * DAY));
+      const row = byDate.get(date);
+      return { date, checked: row?.checked ?? 0, flagged: row?.flagged ?? 0 };
+    }),
+    recent: recent.map((m) => ({
+      id: m.id,
+      sessionId: String(m.sessionId),
+      at: m.createdAt,
+      retried: m.grounding?.retried ?? false,
+      violations: m.grounding?.violations ?? [],
+    })),
     seriesDays: SERIES_DAYS,
   };
 }

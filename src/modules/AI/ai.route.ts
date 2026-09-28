@@ -6,6 +6,7 @@ import {
   listSessionsHandler,
   getSessionHandler,
   deleteSessionHandler,
+  groundingStatsHandler,
   sendMessageHandler,
   streamMessageHandler,
 } from './ai.controller.js';
@@ -21,6 +22,7 @@ router.use(authenticate);
 
 router.get('/stats', requireRole(ROLES.ADMIN), chatStatsHandler);
 router.get('/usage', requireRole(ROLES.ADMIN), aiUsageHandler);
+router.get('/grounding', requireRole(ROLES.ADMIN), groundingStatsHandler);
 
 router.get('/', listSessionsHandler);
 router.post('/', validateBody(createSessionSchema), createSessionHandler);
