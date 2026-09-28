@@ -1,16 +1,16 @@
 import Category from '../../modules/categories/category.model.js';
 
 export const CATEGORY_NAMES = [
-  'Elektronik',
-  'Fashion Pria',
-  'Fashion Wanita',
-  'Kesehatan & Kecantikan',
-  'Rumah Tangga',
-  'Makanan & Minuman',
-  'Olahraga & Outdoor',
-  'Hobi & Koleksi',
-  'Otomotif',
-  'Buku & Alat Tulis',
+  'Electronics',
+  "Men's Fashion",
+  "Women's Fashion",
+  'Beauty & Personal Care',
+  'Home & Kitchen',
+  'Grocery & Gourmet Food',
+  'Sports & Outdoors',
+  'Toys & Games',
+  'Automotive',
+  'Books',
 ];
 
 export default {

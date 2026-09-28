@@ -1,73 +1,115 @@
-import Product from '../../modules/products/product.model.js';
-import { fakerID_ID as faker } from '@faker-js/faker';
-import { ProductType } from '../../modules/products/product.model.js';
-import { CATEGORY_NAMES } from './category.seeder.js';
+import Product, { ProductType } from '../../modules/products/product.model.js';
 import { generateSlug } from '../../common/utils/slug.js';
+import { CATEGORY_NAMES } from './category.seeder.js';
+
+interface SeedProduct {
+  name: string;
+  category: string;
+  regularPrice: number;
+  salePrice?: number;
+  images?: string[];
+  weight: number;
+  dimensions: { length: number; width: number; height: number };
+  description: string;
+}
+
+const placeholderFor = (name: string) =>
+  `https://placehold.co/800x800/e2e8f0/475569/png?text=${encodeURIComponent(name)}`;
+
+const PRODUCTS: SeedProduct[] = [
+  { name: 'JLab Go Air Pop True Wireless Earbuds', category: 'Electronics', regularPrice: 25.00, images: ['https://cdn.shopify.com/s/files/1/0240/9337/files/JLab-GO-Air-Pop-True-Wireless-Earbuds-Black-Front_3ce6e2a3-5174-4bad-a377-4fae954af28a.jpg', 'https://cdn.shopify.com/s/files/1/0240/9337/files/BAN08374_8b001fb7-3470-4c91-9ab1-dcfcc0c62a89.jpg'], weight: 0.12, dimensions: { length: 12, width: 9, height: 4 }, description: 'Ultra-light true wireless earbuds with 32+ hours of playtime, dual connect and three EQ sound settings.' },
+  { name: 'JLab Go Air Sport True Wireless Earbuds', category: 'Electronics', regularPrice: 30.00, images: ['https://cdn.shopify.com/s/files/1/0240/9337/files/JLab-Go-AIr-Sport-True_Wireless-Sport-Earbuds-Light-Blue_1da46350-5939-49e7-8d58-b9fdd360111b.jpg', 'https://cdn.shopify.com/s/files/1/0240/9337/files/GOAirSportLightBlue2.jpg'], weight: 0.15, dimensions: { length: 12, width: 9, height: 5 }, description: 'Secure ear-hook fit for workouts with 32+ hours of playtime and IP55 sweat resistance.' },
+  { name: 'Skullcandy Dime 3 True Wireless Earbuds', category: 'Electronics', regularPrice: 34.99, salePrice: 29.99, images: ['https://cdn.shopify.com/s/files/1/0635/5114/3993/files/Dime3_PSR-Blue_1.png', 'https://cdn.shopify.com/s/files/1/0635/5114/3993/files/Dime3_PSR-Blue_2.jpg'], weight: 0.1, dimensions: { length: 11, width: 8, height: 4 }, description: 'Compact earbuds with 20 hours of battery, multipoint pairing and built-in Tile finding.' },
+  { name: 'Skullcandy Hesh 360 Wireless Headphones', category: 'Electronics', regularPrice: 99.99, images: ['https://cdn.shopify.com/s/files/1/0635/5114/3993/files/Black_1_2eb53192-8b98-4709-8714-66f163c5146c.png', 'https://cdn.shopify.com/s/files/1/0635/5114/3993/files/Black_2_d283074f-532c-4074-a0c5-9aa1c62ef240.jpg'], weight: 0.4, dimensions: { length: 22, width: 19, height: 8 }, description: 'Over-ear wireless headphones with rapid charge and up to 60 hours of battery life.' },
+  { name: 'Skullcandy Dime Evo True Wireless Earbuds', category: 'Electronics', regularPrice: 49.99, images: ['https://cdn.shopify.com/s/files/1/0635/5114/3993/files/dime_evo_buy_box_sage_1.png', 'https://cdn.shopify.com/s/files/1/0635/5114/3993/files/1_dimeEvo_realtree_pink.png'], weight: 0.11, dimensions: { length: 11, width: 8, height: 4 }, description: 'Pocket-size earbuds with an app-tunable sound profile and multipoint connection.' },
+
+  { name: 'Allbirds Men\'s Tree Runners', category: 'Men\'s Fashion', regularPrice: 100.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/TR3MMST080_SHOE_LEFT_GLOBAL_MENS_TREE_RUNNER_MIST_WHITE_9959c126-77c8-42fc-aef3-7d6093c605bf.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/TR3MMST080_SHOE_BACK_GLOBAL_MENS_TREE_RUNNER_MIST_WHITE_4b1a41c7-cbf7-466b-a5e1-091a32c6382f.png'], weight: 0.9, dimensions: { length: 33, width: 22, height: 12 }, description: 'Breathable everyday sneakers made with eucalyptus tree fiber and a sugarcane-based sole.' },
+  { name: 'Allbirds Men\'s Wool Runners', category: 'Men\'s Fashion', regularPrice: 110.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/AB0098M_SHOE_LEFT_GLOBAL_MENS_WOOL_RUNNER_HAZY_INDIGO_BLIZZARD.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/AB0098M_SHOE_BACK_GLOBAL_MENS_WOOL_RUNNER_HAZY_INDIGO_BLIZZARD.png'], weight: 0.95, dimensions: { length: 33, width: 22, height: 12 }, description: 'Cozy sneakers in soft ZQ merino wool that regulates temperature and resists odor.' },
+  { name: 'Allbirds Men\'s Tree Dasher 2', category: 'Men\'s Fashion', regularPrice: 140.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/AA000YM_SHOE_LEFT_GLOBAL_MENS_TREE_DASHER_2.0_Natural_Black_Blizzard_48bbccd1-a0ef-475d-a3c1-af945ece7fbc.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/AA000YM_SHOE_BACK_GLOBAL_MENS_TREE_DASHER_2.0_Natural_Black_Blizzard_b226015e-961d-4cd2-83fb-cd9a379e4ad1.png'], weight: 0.95, dimensions: { length: 33, width: 22, height: 12 }, description: 'Lightweight running shoe with a responsive midsole for daily miles and errands.' },
+  { name: 'Allbirds Men\'s Wool Cruiser', category: 'Men\'s Fashion', regularPrice: 105.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/A11642_25Q3_Wool-Cruiser-Dark-Navy-Dark-Navy-Sole_PDP_LEFT__1_3ecfbe47-ed69-405b-82c5-e8580d83783b.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/A11642_25Q3_Wool-Cruiser-Dark-Navy-Dark-Navy-Sole_PDP_BACK_1ec5b327-45c1-4a4f-8949-39e009ccfd0b.png'], weight: 0.95, dimensions: { length: 33, width: 22, height: 12 }, description: 'Retro-inspired casual sneaker with a merino wool upper and a cushioned footbed.' },
+  { name: 'Ridge Wallet Aluminum, Gunmetal', category: 'Men\'s Fashion', regularPrice: 95.00, images: ['https://cdn.shopify.com/s/files/1/0613/6213/files/Gunmetal-Wallet-THUMBNAIL.jpg', 'https://cdn.shopify.com/s/files/1/0613/6213/files/Gunmetal-Wallet-RenderBack.jpg'], weight: 0.15, dimensions: { length: 12, width: 9, height: 3 }, description: 'Minimalist RFID-blocking wallet with an aluminum frame that holds 1 to 12 cards.' },
+
+  { name: 'Allbirds Women\'s Tree Runners', category: 'Women\'s Fashion', regularPrice: 100.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/TR3MNNW080_SHOE_LEFT_GLOBAL_MENS_TREE_RUNNER_NAVY_NIGHT_WHITE_v2_1997bb94-52da-461d-b337-47f3599f37b3.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/TR3MNNW080_SHOE_BACK_GLOBAL_MENS_TREE_RUNNER_NAVY_NIGHT_WHITE_v2_e84ff492-445c-43c5-9054-99a9ebe39e7e.png'], weight: 0.8, dimensions: { length: 31, width: 20, height: 11 }, description: 'Breathable everyday sneakers made with eucalyptus tree fiber and a sugarcane-based sole.' },
+  { name: 'Allbirds Women\'s Wool Runners', category: 'Women\'s Fashion', regularPrice: 110.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/AB0098M_SHOE_LEFT_GLOBAL_MENS_WOOL_RUNNER_HAZY_INDIGO_BLIZZARD_d22b2af4-a20e-4004-ae0a-aafea3ffea98.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/AB0098M_SHOE_BACK_GLOBAL_MENS_WOOL_RUNNER_HAZY_INDIGO_BLIZZARD_0f3546d1-0493-4633-90a5-f5b0d1f0e0c7.png'], weight: 0.85, dimensions: { length: 31, width: 20, height: 11 }, description: 'Cozy sneakers in soft ZQ merino wool that regulates temperature and resists odor.' },
+  { name: 'Allbirds Women\'s Tree Breezer Bow', category: 'Women\'s Fashion', regularPrice: 100.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/A11594_25Q3_Tree_Breezer_Bow_Medium_Grey_PDP_LEFT-2000x2000.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/A11594_25Q3_Tree_Breezer_Bow_Medium_Grey_PDP_BACK-2000x2000.png'], weight: 0.7, dimensions: { length: 31, width: 20, height: 10 }, description: 'Lightweight ballet flat in breathable tree fiber, finished with a bow detail.' },
+  { name: 'Allbirds Women\'s Cruiser', category: 'Women\'s Fashion', regularPrice: 105.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/A11822_25Q3_Cruiser_Natural_White_Natural_White_PDP_LEFT-2000x2000.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/A11822_25Q3_Cruiser_Natural_White_Natural_White_PDP_BACK-2000x2000.png'], weight: 0.85, dimensions: { length: 31, width: 20, height: 11 }, description: 'Retro-inspired casual sneaker with a soft upper and a cushioned footbed.' },
+  { name: 'Allbirds Women\'s Lounger Lift', category: 'Women\'s Fashion', regularPrice: 110.00, images: ['https://cdn.shopify.com/s/files/1/1104/4168/files/A11844_25Q3_Lounger_Lift_Travel_Rugged_Beige_Stony_Cream_Sole_PDP_LEFT-2000x2000.png', 'https://cdn.shopify.com/s/files/1/1104/4168/files/A11844_25Q3_Lounger_Lift_Travel_Rugged_Beige_Stony_Cream_Sole_PDP_BACK-2000x2000.png'], weight: 0.8, dimensions: { length: 31, width: 20, height: 11 }, description: 'Easy slip-on with a lifted sole and a flexible, washable upper.' },
+
+  { name: 'COSRX Advanced Snail 96 Mucin Power Essence, 3.38 fl oz', category: 'Beauty & Personal Care', regularPrice: 25.00, images: ['https://cdn.shopify.com/s/files/1/0513/3775/6828/files/james_800x1067_1_1_4e9750cc-2cd6-4817-ace5-be2305a85806.jpg', 'https://cdn.shopify.com/s/files/1/0513/3775/6828/files/advanced-snail-96-mucin-power-essence-cosrx-official-4.jpg'], weight: 0.2, dimensions: { length: 15, width: 6, height: 6 }, description: 'Lightweight essence with 96% snail secretion filtrate to hydrate and repair dull skin.' },
+  { name: 'COSRX Acne Pimple Master Patch, 24 Patches', category: 'Beauty & Personal Care', regularPrice: 6.99, images: ['https://cdn.shopify.com/s/files/1/0513/3775/6828/files/acne-pimple-master-patch-cosrx-official-1.jpg', 'https://cdn.shopify.com/s/files/1/0513/3775/6828/files/acne-pimple-master-patch-cosrx-official-2.jpg'], weight: 0.03, dimensions: { length: 12, width: 8, height: 1 }, description: 'Hydrocolloid spot patches that absorb fluid and protect blemishes overnight.' },
+  { name: 'e.l.f. Halo Glow Liquid Filter', category: 'Beauty & Personal Care', regularPrice: 15.00, images: ['https://cdn.shopify.com/s/files/1/0661/2251/4520/files/83565_OpenA_V2_R_d02ae91d-8a71-4bba-bfbb-ab663a9b18f0.png', 'https://cdn.shopify.com/s/files/1/0661/2251/4520/files/83566_OpenA_R_33a73a2a-a30e-4a6f-acf5-4bb7fd90bc35.png'], weight: 0.08, dimensions: { length: 12, width: 5, height: 4 }, description: 'Complexion booster with hyaluronic acid for a soft-focus, luminous finish.' },
+  { name: 'Glossier Balm Dotcom', category: 'Beauty & Personal Care', regularPrice: 16.00, images: ['https://cdn.shopify.com/s/files/1/0627/9164/7477/files/glossier-bdc-wildfig-carousel-1.png', 'https://cdn.shopify.com/s/files/1/0627/9164/7477/files/glossier-bdc-wildfig-carousel-02.png'], weight: 0.05, dimensions: { length: 10, width: 5, height: 3 }, description: 'Multi-use lip balm and skin salve that soothes dry, chapped areas.' },
+  { name: 'Glossier Boy Brow', category: 'Beauty & Personal Care', regularPrice: 22.00, images: ['https://cdn.shopify.com/s/files/1/0627/9164/7477/files/glossier-boy-brow-black-carousel-1.png', 'https://cdn.shopify.com/s/files/1/0627/9164/7477/files/glossier-boy-brow-black-carousel-2.png'], weight: 0.04, dimensions: { length: 12, width: 4, height: 3 }, description: 'Brushable brow pomade that fills, shapes and holds brows in place.' },
+
+  { name: 'Stanley Quencher H2.0 FlowState Tumbler, 40 oz', category: 'Home & Kitchen', regularPrice: 45.00, salePrice: 29.25, images: ['https://cdn.shopify.com/s/files/1/0375/3269/6635/files/Web_PNG_Square-TheQuencherH2.0FlowstateTumbler-40OZ-BlueDreamWildFlower-Front.png', 'https://cdn.shopify.com/s/files/1/0375/3269/6635/files/Web_PNG_Square-TheQuencherH2.0FlowstateTumbler-40OZ-SorbetWildflower-Front.png'], weight: 0.65, dimensions: { length: 28, width: 14, height: 14 }, description: 'Double-wall vacuum insulated tumbler with a comfort handle and a three-position lid.' },
+  { name: 'Stanley IceFlow Flip Straw Tumbler, 30 oz', category: 'Home & Kitchen', regularPrice: 35.00, salePrice: 26.25, images: ['https://cdn.shopify.com/s/files/1/0375/3269/6635/files/Web_PNG_Square-The_IceFlow_Flip_Straw_2.0_Tumbler-30_oz_0.89_L-Bedrock_Gloss-Front.png', 'https://cdn.shopify.com/s/files/1/0375/3269/6635/files/Web_PNG_Square-The_IceFlow_Flip_Straw_2.0_Tumbler-30_oz_0.89_L-Blossom_Gloss-Front.png'], weight: 0.55, dimensions: { length: 26, width: 12, height: 12 }, description: 'Leakproof insulated tumbler with a built-in flip straw and a carry handle.' },
+  { name: 'Lodge 6 Quart Enameled Cast Iron Dutch Oven', category: 'Home & Kitchen', regularPrice: 99.95, images: ['https://cdn.shopify.com/s/files/1/0889/2707/6724/files/EC6D102G_a96be7d9-ccf2-4552-b34c-a3537b8df521.jpg', 'https://cdn.shopify.com/s/files/1/0889/2707/6724/files/EC6D503G.jpg'], weight: 6.4, dimensions: { length: 36, width: 32, height: 20 }, description: 'Enameled cast iron for braising, baking and slow cooking, oven safe to 500°F.' },
+  { name: 'Lodge 4.5 Quart Enameled Cast Iron Dutch Oven', category: 'Home & Kitchen', regularPrice: 79.95, images: ['https://cdn.shopify.com/s/files/1/0889/2707/6724/files/EC4D51_925eb8d3-d8a2-4ebf-b02b-fdf6a0b2338b.jpg', 'https://cdn.shopify.com/s/files/1/0889/2707/6724/files/ec4d43_f11b4cbf-838e-487e-935e-cf836cabff67.jpg'], weight: 5.2, dimensions: { length: 33, width: 29, height: 18 }, description: 'Enameled cast iron Dutch oven with even heat retention for stews and bread.' },
+  { name: 'Lodge 10.5 Inch Square Cast Iron Grill Pan', category: 'Home & Kitchen', regularPrice: 29.95, images: ['https://cdn.shopify.com/s/files/1/0889/2707/6724/files/L8SGP3-1.20220812182330797.png', 'https://cdn.shopify.com/s/files/1/0889/2707/6724/files/L8SGP3-2.20220812182419246.png'], weight: 2.6, dimensions: { length: 40, width: 28, height: 6 }, description: 'Pre-seasoned square grill pan with raised ribs for sear marks on the stovetop.' },
+
+  { name: 'Liquid I.V. Hydration Multiplier, Lemon Lime, 16 Sticks', category: 'Grocery & Gourmet Food', regularPrice: 24.99, images: ['https://cdn.shopify.com/s/files/1/1338/1013/files/HMO_LL_16ct_PDP_5d06a7d4-5650-432a-9c54-78fc806aa73b.jpg', 'https://cdn.shopify.com/s/files/1/1338/1013/files/HMO-LL-Alt-Image-2_1a6d9c1b-14a4-49f2-8ba0-077b394c3bea.jpg'], weight: 0.3, dimensions: { length: 18, width: 10, height: 6 }, description: 'Electrolyte drink mix with a blend of electrolytes, vitamins and a touch of sugar.' },
+  { name: 'Liquid I.V. Sugar-Free Hydration Multiplier, Lemon Lime', category: 'Grocery & Gourmet Food', regularPrice: 21.84, images: ['https://cdn.shopify.com/s/files/1/1338/1013/files/HMSF_SFLL_14ct_PDP_e31a4726-608a-44e3-a0bd-93b5867d85a1.jpg', 'https://cdn.shopify.com/s/files/1/1338/1013/files/HMSF-LL-Alt-Image-2_2eb7cc3c-0ef9-4246-8e08-6f6a633aee99.jpg'], weight: 0.25, dimensions: { length: 18, width: 10, height: 6 }, description: 'Sugar-free electrolyte drink mix for everyday hydration.' },
+  { name: 'OLIPOP Prebiotic Soda, Vintage Cola, 12-Pack', category: 'Grocery & Gourmet Food', regularPrice: 35.99, images: ['https://cdn.shopify.com/s/files/1/0034/6610/0806/files/vintage-cola-9g-olipop_gallery-image_single-can_new_asset.webp', 'https://cdn.shopify.com/s/files/1/0034/6610/0806/products/VC-BOTTOM1_new_asset.png'], weight: 4.8, dimensions: { length: 32, width: 24, height: 13 }, description: 'Prebiotic soda with fiber and plant ingredients, a lower-sugar take on classic cola.' },
+  { name: 'OLIPOP Classic Soda Variety Pack, 12-Pack', category: 'Grocery & Gourmet Food', regularPrice: 35.99, images: ['https://cdn.shopify.com/s/files/1/0034/6610/0806/files/classic-soda-variety-pack-6g-olipop_main-image-v2_new_asset.webp', 'https://cdn.shopify.com/s/files/1/0034/6610/0806/files/PDP-Horizontal_new_asset.webp'], weight: 4.8, dimensions: { length: 32, width: 24, height: 13 }, description: 'Variety pack of prebiotic sodas in classic flavors, 12 fl oz cans.' },
+  { name: 'Death Wish Coffee Organic Medium Roast Ground Coffee, 16 oz', category: 'Grocery & Gourmet Food', regularPrice: 17.48, weight: 0.5, dimensions: { length: 20, width: 12, height: 7 }, description: 'Organic, fair trade medium roast ground coffee with a smooth, balanced flavor.' },
+
+  { name: 'Manduka PRO Yoga Mat, 6mm', category: 'Sports & Outdoors', regularPrice: 144.00, images: ['https://cdn.shopify.com/s/files/1/0132/3529/0170/products/111011460-Mats-Pro71-Elderberry-01.jpg', 'https://cdn.shopify.com/s/files/1/0132/3529/0170/products/111011460-Mats-Pro71-Elderberry-03.jpg'], weight: 3.4, dimensions: { length: 70, width: 16, height: 16 }, description: 'Dense 6mm yoga mat with a closed-cell surface for grip, stability and durability.' },
+  { name: 'Manduka Recycled Foam Yoga Block', category: 'Sports & Outdoors', regularPrice: 26.00, images: ['https://cdn.shopify.com/s/files/1/0132/3529/0170/files/451012020-R-FOAM-BLOCK-THUNDER_01.jpg', 'https://cdn.shopify.com/s/files/1/0132/3529/0170/files/451012020-R-FOAM-BLOCK-THUNDER_03.jpg'], weight: 0.35, dimensions: { length: 24, width: 16, height: 11 }, description: 'Lightweight yoga block made from recycled foam for support and alignment.' },
+  { name: 'Hyperice Hypervolt Go 2 Massage Gun', category: 'Sports & Outdoors', regularPrice: 139.00, images: ['https://cdn.shopify.com/s/files/1/0786/1852/5910/files/HypervoltGo21_02a97ff3-c9f6-406e-a922-e4067e94461e.png', 'https://cdn.shopify.com/s/files/1/0786/1852/5910/files/HypervoltGo24_17595148-7201-4e99-949d-312cc7c680d1.png'], weight: 0.9, dimensions: { length: 24, width: 20, height: 8 }, description: 'Portable percussion massage gun with three speeds and two head attachments.' },
+  { name: 'Therabody Theragun Mini (3rd Gen)', category: 'Sports & Outdoors', regularPrice: 219.99, images: ['https://cdn.shopify.com/s/files/1/0671/4097/6867/files/Mini-Gen-3-Black-PLP-Thumbnail-1.png', 'https://cdn.shopify.com/s/files/1/0671/4097/6867/files/Theragun-Mini-3-Black-Hero-2.webp'], weight: 0.6, dimensions: { length: 18, width: 14, height: 7 }, description: 'Compact percussive therapy device with three speeds for on-the-go relief.' },
+  { name: 'Hyperice Hypersphere Go Vibrating Massage Ball', category: 'Sports & Outdoors', regularPrice: 109.00, images: ['https://cdn.shopify.com/s/files/1/0786/1852/5910/files/hypersphere-go-pdp-1.png', 'https://cdn.shopify.com/s/files/1/0786/1852/5910/files/HypersphereGo2.png'], weight: 0.4, dimensions: { length: 12, width: 12, height: 12 }, description: 'Vibrating massage ball for targeted relief in the feet, back and shoulders.' },
+
+  { name: 'Exploding Kittens: Original Edition', category: 'Toys & Games', regularPrice: 19.99, images: ['https://cdn.shopify.com/s/files/1/0345/9180/1483/files/EKOETINFrontPackShot.png', 'https://cdn.shopify.com/s/files/1/0345/9180/1483/files/EKOETINGameSpecs.png'], weight: 0.3, dimensions: { length: 16, width: 12, height: 6 }, description: 'Fast, strategic card game of kittens, explosions and laser beams for 2 to 5 players.' },
+  { name: 'Throw Throw Burrito Card Game', category: 'Toys & Games', regularPrice: 19.99, images: ['https://cdn.shopify.com/s/files/1/0345/9180/1483/files/01TTB-COREAngled.png', 'https://cdn.shopify.com/s/files/1/0345/9180/1483/files/03TTB-COREContents.png'], weight: 0.9, dimensions: { length: 24, width: 24, height: 8 }, description: 'Dodgeball meets card game, where players race to collect sets and throw squishy burritos.' },
+  { name: 'Magna-Tiles Classic 32-Piece Set', category: 'Toys & Games', regularPrice: 49.99, images: ['https://cdn.shopify.com/s/files/1/0734/5009/4831/files/25Classic32_FR11_RGB.jpg', 'https://cdn.shopify.com/s/files/1/0734/5009/4831/files/Classic-32_631291021322_2.png'], weight: 1.4, dimensions: { length: 30, width: 24, height: 8 }, description: 'Magnetic building tiles in bright colors that click together for open-ended play.' },
+  { name: 'Magna-Tiles Classic 100-Piece Set', category: 'Toys & Games', regularPrice: 119.99, images: ['https://cdn.shopify.com/s/files/1/0734/5009/4831/files/25Classic100_FR11_RGB.jpg', 'https://cdn.shopify.com/s/files/1/0734/5009/4831/files/Classic-100_631291043003_2.png'], weight: 4.0, dimensions: { length: 40, width: 30, height: 14 }, description: 'Large magnetic tile set for building bigger structures and creative STEM play.' },
+  { name: 'What Do You Meme? Adult Party Card Game', category: 'Toys & Games', regularPrice: 24.99, images: ['https://cdn.shopify.com/s/files/1/1557/0087/products/WDYMCore-OnGrey.jpg', 'https://cdn.shopify.com/s/files/1/1557/0087/files/PDP-Optimization-WDYM-03.jpg'], weight: 1.2, dimensions: { length: 28, width: 21, height: 8 }, description: 'Party game where players pair caption cards with photo cards to create the best meme.' },
+
+  { name: 'Chemical Guys Total Interior Cleaner & Protectant, 16 oz', category: 'Automotive', regularPrice: 11.99, images: ['https://cdn.shopify.com/s/files/1/0742/8938/1681/files/SPI22016-Front-2000x2000.jpg', 'https://cdn.shopify.com/s/files/1/0742/8938/1681/files/2025-10-03-SPI220-TotalInterior-Amazon-AltImages-01.jpg'], weight: 0.55, dimensions: { length: 22, width: 9, height: 6 }, description: 'All-in-one cleaner for leather, vinyl, plastic and rubber that leaves a matte finish.' },
+  { name: 'Chemical Guys Maxi Suds II Car Wash Soap, 16 oz', category: 'Automotive', regularPrice: 8.99, images: ['https://cdn.shopify.com/s/files/1/0742/8938/1681/files/CWS_101_16-MaxiSudsII-Cherry-Front_AMZ_2000x2000_a56e6d87-d1ef-4080-bf2f-ed6e10165f36.jpg', 'https://cdn.shopify.com/s/files/1/0742/8938/1681/files/CWS_101-MaxiSudsII-AltImages-01.jpg'], weight: 0.55, dimensions: { length: 22, width: 9, height: 6 }, description: 'High-foaming car wash soap that lifts dirt without stripping wax or sealants.' },
+  { name: 'Chemical Guys Megalodon Twisted Loop Microfiber Drying Towel', category: 'Automotive', regularPrice: 39.99, images: ['https://cdn.shopify.com/s/files/1/0742/8938/1681/files/MIC893_Megalodon_Pocket_Towel_Main_V3.jpg', 'https://cdn.shopify.com/s/files/1/0742/8938/1681/files/MIC893-_Megalodon_Pocket_Grip_Towel-_Alt_Imgs-01.jpg'], weight: 0.7, dimensions: { length: 30, width: 24, height: 6 }, description: 'Oversized twisted loop microfiber towel that absorbs water in a single pass.' },
+  { name: 'Adam\'s Polishes Car Wash Shampoo', category: 'Automotive', regularPrice: 9.99, images: ['https://cdn.shopify.com/s/files/1/0093/8206/8321/products/adams_polishes_car_shampoo_16oz_grey_placeholder.jpg', 'https://cdn.shopify.com/s/files/1/0093/8206/8321/products/adams_polishes_car_shampoo_swatch_shot_001.jpg'], weight: 0.6, dimensions: { length: 22, width: 9, height: 6 }, description: 'pH-balanced car shampoo with rich suds that clean safely without removing protection.' },
+  { name: 'Adam\'s Polishes Clay Wash Mitt', category: 'Automotive', regularPrice: 24.99, images: ['https://cdn.shopify.com/s/files/1/0093/8206/8321/files/Adam_s-Polishes-2026-Clay-Wash-Mitt-Product-Photo-001.jpg', 'https://cdn.shopify.com/s/files/1/0093/8206/8321/files/Adam_s-Polishes-2026-Clay-Wash-Mitt-Swatch-Shot-001.jpg'], weight: 0.2, dimensions: { length: 22, width: 16, height: 5 }, description: 'Synthetic clay mitt that removes bonded contaminants while you wash.' },
+
+  { name: 'Atomic Habits by James Clear (Hardcover)', category: 'Books', regularPrice: 27.00, images: ['https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg'], weight: 0.55, dimensions: { length: 24, width: 16, height: 3 }, description: 'A practical framework for building good habits and breaking bad ones through small changes.' },
+  { name: 'Project Hail Mary by Andy Weir (Hardcover)', category: 'Books', regularPrice: 32.00, images: ['https://covers.openlibrary.org/b/isbn/9780593135204-L.jpg'], weight: 0.7, dimensions: { length: 24, width: 16, height: 4 }, description: 'A lone astronaut wakes up on a mission to save humanity, with no memory of how he got there.' },
+  { name: 'The Housemaid by Freida McFadden (Paperback)', category: 'Books', regularPrice: 18.99, images: ['https://covers.openlibrary.org/b/isbn/9781538742570-L.jpg'], weight: 0.35, dimensions: { length: 21, width: 14, height: 3 }, description: 'A psychological thriller about a live-in housekeeper and the family she works for.' },
+  { name: 'Fourth Wing by Rebecca Yarros (Hardcover)', category: 'Books', regularPrice: 29.99, images: ['https://covers.openlibrary.org/b/isbn/9781649374042-L.jpg'], weight: 0.8, dimensions: { length: 24, width: 16, height: 5 }, description: 'A romantasy about a war college for dragon riders, where only the strong survive.' },
+  { name: 'The Psychology of Money by Morgan Housel (Paperback)', category: 'Books', regularPrice: 19.99, images: ['https://covers.openlibrary.org/b/isbn/9780857197689-L.jpg'], weight: 0.3, dimensions: { length: 21, width: 14, height: 2 }, description: 'Short stories about how behavior, not intelligence, shapes our financial decisions.' },
+];
 
 export default {
   name: 'product',
 
   async run() {
+    const unknown = PRODUCTS.filter((p) => !CATEGORY_NAMES.includes(p.category));
+    if (unknown.length > 0) {
+      throw new Error(
+        `[product] Unknown categories: ${[...new Set(unknown.map((p) => p.category))].join(', ')}`
+      );
+    }
+
     await Product.deleteMany({});
     await Product.syncIndexes(); // rebuild indexes (e.g. unique slug) on the clean collection
     console.log('[product] Cleared products collection');
 
-    const products = Array.from({ length: 60 }, () => {
-      const name = faker.commerce.productName();
-      const regularPrice = faker.number.float({
-        min: 10,
-        max: 1000,
-        fractionDigits: 2,
-      });
-
-      const hasSale = faker.datatype.boolean();
-
-      return {
-        name,
-        slug: generateSlug(name),
-        description: faker.commerce.productDescription(),
-        type: faker.helpers.arrayElement(Object.values(ProductType)),
-        regularPrice,
-
-        salePrice: hasSale
-          ? faker.number.float({
-              min: 1,
-              max: regularPrice,
-              fractionDigits: 2,
-            })
-          : undefined,
-
-        weight: faker.number.int({
-          min: 1,
-          max: 100,
-        }),
-
-        dimensions: {
-          length: faker.number.int({
-            min: 1,
-            max: 100,
-          }),
-          width: faker.number.int({
-            min: 1,
-            max: 100,
-          }),
-          height: faker.number.int({
-            min: 1,
-            max: 100,
-          }),
-        },
-
-        stock: faker.number.int({
-          min: 1,
-          max: 100,
-        }),
-
-        category: faker.helpers.arrayElement(CATEGORY_NAMES),
-      };
-    });
+    const products = PRODUCTS.map((p, i) => ({
+      name: p.name,
+      slug: generateSlug(p.name),
+      description: p.description,
+      images: p.images ?? [placeholderFor(p.name)],
+      type: ProductType.PHYSICAL,
+      regularPrice: p.regularPrice,
+      salePrice: p.salePrice,
+      weight: p.weight,
+      dimensions: p.dimensions,
+      stock: 15 + ((i * 7) % 86),
+      category: p.category,
+    }));
 
     await Product.create(products);
 
-    console.log(`[product] Seeded ${products.length} products`);
+    const onSale = products.filter((p) => p.salePrice !== undefined).length;
+    console.log(`[product] Seeded ${products.length} products (${onSale} on sale)`);
   },
 };
