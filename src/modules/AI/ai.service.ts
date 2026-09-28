@@ -2,8 +2,15 @@ import { OpenAI } from 'openai';
 import { env } from '../../config/env.js';
 import { ApiError } from '../../common/errors/ApiError.js';
 import ChatSession from './chatSession.model.js';
-import ChatMessage from './chatMessage.model.js';
+import ChatMessage, { type GroundingRecord } from './chatMessage.model.js';
 import { tools, executeTool } from './ai.tools.js';
+import {
+  checkGrounding,
+  collectGrounded,
+  correctionPrompt,
+  type GroundedProduct,
+  type GroundingVerdict,
+} from './ai.grounding.js';
 import { recordFailure, recordUsage } from './ai.meter.js';
 
 type Message = OpenAI.ChatCompletionMessageParam;
@@ -15,6 +22,7 @@ DATA RULES
 - Always use the provided tools to fetch real catalog and wishlist data. Never invent product names, prices, stock, categories, or ids.
 - To get a product id, first search the catalog by keywords; use get_products_by_ids when you already know the id(s).
 - If a product is not found, say so politely and offer alternatives (search or suggest similar items).
+- All prices are in US dollars. Quote them exactly as the tools return them, with a $ sign. Never convert to another currency and never write "Rp".
 
 COMPARISON (act as a shopping analyst from the customer's point of view)
 - When the user wants to compare specific products, call compare_products with their ids — it returns a structured side-by-side comparison that the app renders as a table.
@@ -173,11 +181,52 @@ async function closingAnswer(
   }
 }
 
-async function persist(sessionId: string, userText: string, reply: string, attachments: unknown) {
+async function persist(
+  sessionId: string,
+  userText: string,
+  reply: string,
+  attachments: unknown,
+  grounding: GroundingRecord | null = null,
+) {
   await ChatMessage.create([
     { sessionId, role: 'user', content: userText },
-    { sessionId, role: 'model', content: reply, attachments },
+    { sessionId, role: 'model', content: reply, attachments, grounding },
   ]);
+}
+
+// One rewrite attempt against the same rows. The result is only kept if it is
+// actually cleaner, so a worse second answer can never replace a better first.
+async function reground(
+  ai: OpenAI,
+  messages: Message[],
+  reply: string,
+  verdict: GroundingVerdict,
+  grounded: GroundedProduct[],
+  userText: string,
+  userId: string,
+): Promise<{ reply: string; verdict: GroundingVerdict; retried: boolean }> {
+  console.warn(
+    `[ai] grounding: ${verdict.violations.map((v) => `${v.kind}=${v.value}`).join(', ')} (rows=${verdict.checked})`,
+  );
+
+  try {
+    const res = await metered(ai, 'closing', userId, {
+      model: env.openrouter.model,
+      messages: [...messages, { role: 'user', content: correctionPrompt(verdict, grounded) }],
+    });
+    const corrected = res.choices[0]?.message?.content ?? '';
+    if (!corrected.trim()) return { reply, verdict, retried: true };
+
+    const rechecked = checkGrounding(corrected, grounded, userText);
+    if (rechecked.violations.length >= verdict.violations.length) {
+      console.warn('[ai] grounding: rewrite was no cleaner, keeping the original');
+      return { reply, verdict, retried: true };
+    }
+    return { reply: corrected, verdict: rechecked, retried: true };
+  } catch (err) {
+    console.warn('[ai] grounding: rewrite failed:', err instanceof Error ? err.message : err);
+    return { reply, verdict, retried: true };
+  }
 }
 
 export async function sendMessage(sessionId: string, userId: string, text: string) {
@@ -190,6 +239,7 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
   let attachments: Record<string, unknown> | null = null;
   let finishReason: string | undefined;
   let steps = 0;
+  const grounded: GroundedProduct[] = [];
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
     steps = step + 1;
@@ -205,6 +255,7 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
         if (call.type !== 'function') continue;
         const result = await executeTool(call.function.name, safeParse(call.function.arguments), { userId });
         if (call.function.name === 'compare_products' && !('error' in result)) attachments = result;
+        grounded.push(...collectGrounded(result));
         messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
       }
       continue;
@@ -217,7 +268,18 @@ export async function sendMessage(sessionId: string, userId: string, text: strin
   if (!reply.trim()) reply = await closingAnswer(ai, messages, { steps, finishReason, userId });
   if (!reply.trim()) reply = FALLBACK_REPLY;
 
-  await persist(sessionId, text, reply, attachments);
+  // The fallback states no facts, so there is nothing to ground it against.
+  let grounding: GroundingRecord | null = null;
+  if (reply !== FALLBACK_REPLY) {
+    let verdict = checkGrounding(reply, grounded, text);
+    let retried = false;
+    if (!verdict.ok) {
+      ({ reply, verdict, retried } = await reground(ai, messages, reply, verdict, grounded, text, userId));
+    }
+    grounding = { ...verdict, retried };
+  }
+
+  await persist(sessionId, text, reply, attachments, grounding);
 
   if (needsTitle) {
     session.title = await generateTitle(text, reply);
@@ -242,6 +304,7 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
   let attachments: Record<string, unknown> | null = null;
   let finishReason: string | undefined;
   let steps = 0;
+  const grounded: GroundedProduct[] = [];
 
   for (let step = 0; step < MAX_TOOL_STEPS; step++) {
     steps = step + 1;
@@ -289,6 +352,7 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
           attachments = result;
           yield { type: 'attachment', attachment: result };
         }
+        grounded.push(...collectGrounded(result));
         messages.push({ role: 'tool', tool_call_id: c.id, content: JSON.stringify(result) });
       }
       continue;
@@ -308,7 +372,20 @@ export async function* streamMessage(sessionId: string, userId: string, text: st
     yield { type: 'chunk', text: reply };
   }
 
-  await persist(sessionId, text, reply, attachments);
+  // Streamed text has already reached the reader, so a failed check is
+  // recorded rather than rewritten.
+  let grounding: GroundingRecord | null = null;
+  if (reply !== FALLBACK_REPLY) {
+    const verdict = checkGrounding(reply, grounded, text);
+    if (!verdict.ok) {
+      console.warn(
+        `[ai] grounding (streamed): ${verdict.violations.map((v) => `${v.kind}=${v.value}`).join(', ')}`,
+      );
+    }
+    grounding = { ...verdict, retried: false };
+  }
+
+  await persist(sessionId, text, reply, attachments, grounding);
 
   if (needsTitle) {
     session.title = await generateTitle(text, reply);
