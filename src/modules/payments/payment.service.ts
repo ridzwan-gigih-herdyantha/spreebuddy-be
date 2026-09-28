@@ -181,23 +181,47 @@ async function setOrderPaymentStatus(payment: PaymentDocument, status: OrderPaym
 }
 
 export async function markPaid(payment: PaymentDocument, paymentIntentId?: string) {
-  if (payment.status === PaymentStatus.PAID) return payment;
+  // Flipping to paid is a single conditional write, so two deliveries arriving
+  // together — a completed and an async_payment_succeeded, say — cannot both
+  // decide they were the one that settled it.
+  const settled = await Payment.findOneAndUpdate(
+    { _id: payment._id, status: { $ne: PaymentStatus.PAID } },
+    {
+      $set: {
+        status: PaymentStatus.PAID,
+        paidAt: new Date(),
+        ...(paymentIntentId ? { paymentIntentId } : {}),
+      },
+    },
+    { new: true },
+  );
+  if (!settled) return payment;
 
-  payment.status = PaymentStatus.PAID;
-  payment.paidAt = new Date();
-  if (paymentIntentId) payment.paymentIntentId = paymentIntentId;
-  await payment.save();
+  await setOrderPaymentStatus(settled, OrderPaymentStatus.PAID);
 
-  await setOrderPaymentStatus(payment, OrderPaymentStatus.PAID);
+  // Paying is what moves the order forward; the client is never trusted for it.
+  const orders = await Order.find({ _id: { $in: settled.orderIds } });
+  const stranded: string[] = [];
 
-  // Paying is what moves the order forward; the client is never trusted for this.
-  const orders = await Order.find({ _id: { $in: payment.orderIds } });
   for (const order of orders) {
     if (order.status === OrderStatus.PENDING) {
       await lifecycle.transition(order, OrderStatus.PROCESSING);
+    } else if (order.status !== OrderStatus.PROCESSING) {
+      stranded.push(`${order.id} (${order.status})`);
     }
   }
-  return payment;
+
+  // A payment that lands after its checkout expired finds the lines already
+  // cancelled and the stock given back. Forcing them open would fight the state
+  // machine, and throwing would have Stripe retry forever, so the money is
+  // recorded and a person is told.
+  if (stranded.length > 0) {
+    settled.needsAttention = `Paid after ${stranded.length} line(s) had moved on: ${stranded.join(', ')}`;
+    await settled.save();
+    console.error(`[payments] ${settled.id} ${settled.needsAttention}`);
+  }
+
+  return settled;
 }
 
 export async function markFailed(payment: PaymentDocument, reason?: string) {

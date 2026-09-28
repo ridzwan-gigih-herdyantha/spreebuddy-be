@@ -2,13 +2,10 @@ import { Request, Response } from 'express';
 import type Stripe from 'stripe';
 import { env } from '../../config/env.js';
 import { stripe } from './stripe.client.js';
-import WebhookEvent from './webhookEvent.model.js';
 import * as paymentService from './payment.service.js';
+import { claimEvent, markEventApplied, markEventFailed } from './payment.idempotency.js';
 
 const PROVIDER = 'stripe';
-
-const isDuplicateKey = (err: unknown) =>
-  typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000;
 
 const intentId = (value: Stripe.Checkout.Session['payment_intent']) =>
   typeof value === 'string' ? value : (value?.id ?? undefined);
@@ -69,23 +66,33 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
     return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
   }
 
-  // Claim the event before acting on it. The unique index means a redelivery
-  // of an event we already applied stops here.
-  try {
-    await WebhookEvent.create({ provider: PROVIDER, eventId: event.id, type: event.type });
-  } catch (err) {
-    if (isDuplicateKey(err)) return res.json({ received: true, duplicate: true });
-    throw err;
+  // Claim the event before acting on it, so a redelivery cannot apply it twice.
+  const { decision, attempts } = await claimEvent(PROVIDER, event.id, event.type);
+
+  if (decision === 'duplicate') {
+    return res.json({ received: true, duplicate: true });
+  }
+
+  // Someone else is mid-apply. Answering with an error asks Stripe to come
+  // back later, by which time that delivery has either finished or lost its
+  // lease — acknowledging here would risk dropping the event entirely.
+  if (decision === 'in-progress') {
+    return res.status(409).json({ success: false, message: 'Already being processed' });
+  }
+
+  if (decision === 'retry') {
+    console.warn(`[payments] retaking ${event.type} (${event.id}), attempt ${attempts}`);
   }
 
   try {
     await apply(event);
   } catch (err) {
-    // Release the claim so the provider's retry can apply it properly.
-    await WebhookEvent.deleteOne({ eventId: event.id });
+    const message = err instanceof Error ? err.message : 'unknown error';
+    await markEventFailed(event.id, message);
     console.error(`[payments] failed to apply ${event.type} (${event.id})`, err);
     return res.status(500).json({ success: false, message: 'Failed to process the event' });
   }
 
+  await markEventApplied(event.id);
   return res.json({ received: true });
 }

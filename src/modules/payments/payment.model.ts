@@ -42,6 +42,9 @@ export interface IPayment {
   status: PaymentStatus;
   shippingAddress: ShippingAddress;
   failureReason?: string;
+  // Set when the money arrived but the order lines could no longer follow it,
+  // which needs a person to decide on a refund.
+  needsAttention?: string | null;
   paidAt?: Date;
   expiresAt?: Date;
   createdAt: Date;
@@ -84,6 +87,7 @@ const paymentSchema = new Schema<IPayment, PaymentModel>(
     },
     shippingAddress: { type: addressSchema, required: true },
     failureReason: { type: String },
+    needsAttention: { type: String, default: null },
     paidAt: { type: Date },
     expiresAt: { type: Date },
   },

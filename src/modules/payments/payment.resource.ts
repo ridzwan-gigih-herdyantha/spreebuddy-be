@@ -20,6 +20,7 @@ export interface PaymentResponse {
   checkoutUrl: string | null;
   shippingAddress: ShippingAddress;
   failureReason: string | null;
+  needsAttention: string | null;
   orderIds: string[];
   orders: OrderResponse[] | null;
   paidAt: string | null;
@@ -41,6 +42,7 @@ export const PaymentResource = makeResource<PaymentDocument, PaymentResponse>((p
   checkoutUrl: p.checkoutUrl ?? null,
   shippingAddress: p.shippingAddress,
   failureReason: p.failureReason ?? null,
+  needsAttention: p.needsAttention ?? null,
   orderIds: p.orderIds.map((id) => String(id)),
   orders: p.populated('orderIds')
     ? OrderResource.collection(p.orderIds as unknown as OrderDocument[])
